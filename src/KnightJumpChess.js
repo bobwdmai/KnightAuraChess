@@ -140,18 +140,18 @@ class KnightJumpChess extends Chess {
    * @returns {Array} Array of move objects
    */
   moves(options = {}) {
-    const standardMoves = super.moves({ verbose: true, ...options });
+    const { square, piece } = options;
+    const standardMoves = this._moves({ legal: false, square, piece });
     const jumpMoves = this.generateJumpMoves(options);
-
-    // Combine and return all moves
-    const allMoves = [...standardMoves, ...jumpMoves];
 
     // If options.verbose is false, return just the SAN notation
     if (options.verbose === false || !options.verbose) {
-      return allMoves.map(m => typeof m === 'string' ? m : m.san);
+      const sanMoves = standardMoves.map(move => this._moveToSan(move, standardMoves));
+      return [...sanMoves, ...jumpMoves.map(move => move.san)];
     }
 
-    return allMoves;
+    const prettyStandardMoves = standardMoves.map(move => this._formatStandardMove(move, standardMoves));
+    return [...prettyStandardMoves, ...jumpMoves];
   }
 
   /**
@@ -230,22 +230,22 @@ class KnightJumpChess extends Chess {
       const blockingPiece = this.get(nextSquare);
       
       if (blockingPiece) {
-        // There's a piece blocking, try to jump
+        // There's a piece blocking, try to jump forward (move only)
         const jumpRank = rank + (direction * 2);
         const jumpSquare = String.fromCharCode(97 + file) + (jumpRank + 1);
         
         if (jumpRank >= 0 && jumpRank < 8) {
           const jumpTarget = this.get(jumpSquare);
           
-          // Can land on empty square or capture
-          if (!jumpTarget || jumpTarget.color !== color) {
+          // Forward jump is a move only; must land on empty square
+          if (!jumpTarget) {
             moves.push(this.createJumpMove(fromSquare, jumpSquare, 'p', jumpTarget, nextSquare));
           }
         }
       }
     }
 
-    // Diagonal jumps for pawn captures (if there's a piece to jump over diagonally)
+    // Diagonal jumps for pawn captures only (must capture)
     for (const fileDelta of [-1, 1]) {
       const captureFile = file + fileDelta;
       const captureRank = rank + direction;
@@ -264,8 +264,8 @@ class KnightJumpChess extends Chess {
             const jumpSquare = String.fromCharCode(97 + jumpFile) + (jumpRank + 1);
             const jumpTarget = this.get(jumpSquare);
             
-            // Can land on empty square or capture enemy piece
-            if (!jumpTarget || jumpTarget.color !== color) {
+            // Must capture an enemy piece on the landing square
+            if (jumpTarget && jumpTarget.color !== color) {
               moves.push(this.createJumpMove(fromSquare, jumpSquare, 'p', jumpTarget, captureSquare));
             }
           }
@@ -459,18 +459,11 @@ class KnightJumpChess extends Chess {
    * Make a move (override to handle jump moves)
    */
   move(move, options = {}) {
-    // Try standard move first
-    try {
-      const standardMove = super.move(move, options);
-      if (standardMove) {
-        return standardMove;
-      }
-    } catch (e) {
-      // Standard move failed, that's okay - we'll try jump move
-      console.log('Standard move failed, trying jump move');
+    const standardMove = this.makeStandardMoveUnsafe(move, options);
+    if (standardMove) {
+      return standardMove;
     }
 
-    // If standard move failed, try jump move
     return this.makeJumpMove(move, options);
   }
 
@@ -526,6 +519,92 @@ class KnightJumpChess extends Chess {
     this._resetInternalState();
 
     return matchingMove;
+  }
+
+  /**
+   * Make a standard move without enforcing self-check legality.
+   */
+  makeStandardMoveUnsafe(move, options = {}) {
+    if (!move) return null;
+
+    if (typeof move === 'string') {
+      try {
+        return super.move(move, options);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const moves = this._moves({ legal: false });
+    let moveObj = null;
+
+    for (let i = 0, len = moves.length; i < len; i++) {
+      if (
+        move.from === this._algebraic(moves[i].from) &&
+        move.to === this._algebraic(moves[i].to) &&
+        (!('promotion' in moves[i]) || move.promotion === moves[i].promotion)
+      ) {
+        moveObj = moves[i];
+        break;
+      }
+    }
+
+    if (!moveObj) {
+      return null;
+    }
+
+    const san = this._moveToSan(moveObj, moves);
+    this._makeMove(moveObj);
+    this._incPositionCount();
+
+    return this._formatStandardMove(moveObj, moves, san);
+  }
+
+  _algebraic(squareIndex) {
+    const file = squareIndex & 0xf;
+    const rank = squareIndex >> 4;
+    return String.fromCharCode(97 + file) + (8 - rank);
+  }
+
+  _formatStandardMove(moveObj, moves, sanOverride) {
+    return {
+      color: moveObj.color,
+      from: this._algebraic(moveObj.from),
+      to: this._algebraic(moveObj.to),
+      piece: moveObj.piece,
+      captured: moveObj.captured,
+      promotion: moveObj.promotion,
+      san: sanOverride || this._moveToSan(moveObj, moves)
+    };
+  }
+
+  /**
+   * Check which kings are still on the board.
+   * @returns {{ w: boolean, b: boolean }}
+   */
+  getKingStatus() {
+    const status = { w: false, b: false };
+    const board = this.board();
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const piece = board[rank][file];
+        if (piece && piece.type === 'k') {
+          status[piece.color] = true;
+        }
+      }
+    }
+    return status;
+  }
+
+  /**
+   * Determine winner by king capture, if any.
+   * @returns {'w'|'b'|null}
+   */
+  getWinnerByKingCapture() {
+    const status = this.getKingStatus();
+    if (!status.w && status.b) return 'b';
+    if (!status.b && status.w) return 'w';
+    return null;
   }
 }
 

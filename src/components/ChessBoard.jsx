@@ -1,106 +1,114 @@
-import React from 'react';
+﻿import React from 'react';
+import wp from '../assets/chess/cburnett/Chess_plt45.svg';
+import wn from '../assets/chess/cburnett/Chess_nlt45.svg';
+import wb from '../assets/chess/cburnett/Chess_blt45.svg';
+import wr from '../assets/chess/cburnett/Chess_rlt45.svg';
+import wq from '../assets/chess/cburnett/Chess_qlt45.svg';
+import wk from '../assets/chess/cburnett/Chess_klt45.svg';
+import bp from '../assets/chess/cburnett/Chess_pdt45.svg';
+import bn from '../assets/chess/cburnett/Chess_ndt45.svg';
+import bb from '../assets/chess/cburnett/Chess_bdt45.svg';
+import br from '../assets/chess/cburnett/Chess_rdt45.svg';
+import bq from '../assets/chess/cburnett/Chess_qdt45.svg';
+import bk from '../assets/chess/cburnett/Chess_kdt45.svg';
 import '../styles/ChessBoard.css';
 
-/**
- * Simple HTML-based ChessBoard Component
- * Displays the chess board and handles piece selection
- */
+const pieceSprites = {
+  w: { p: wp, n: wn, b: wb, r: wr, q: wq, k: wk },
+  b: { p: bp, n: bn, b: bb, r: br, q: bq, k: bk }
+};
+
+const pieceLetters = {
+  w: { p: 'P', n: 'N', b: 'B', r: 'R', q: 'Q', k: 'K' },
+  b: { p: 'p', n: 'n', b: 'b', r: 'r', q: 'q', k: 'k' }
+};
+
 export default function ChessBoard({
   game,
   selectedSquare,
   legalMoves,
-  onSquareClick
+  onSquareClick,
+  theme,
+  pieceStyle
 }) {
-  console.log('ChessBoard rendering with game:', game ? 'OK' : 'NULL', 'selectedSquare:', selectedSquare, 'legalMoves:', legalMoves);
-  
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-  
-  // Piece symbols
-  const pieceSymbols = {
-    'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-    'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
-  };
-  
+
   const handleSquareClick = (square) => {
     onSquareClick(square);
   };
-  
-  const getPieceSymbol = (piece) => {
-    const symbols = {
-      'wp': '♙', 'wn': '♘', 'wb': '♗', 'wr': '♖', 'wq': '♕', 'wk': '♔',
-      'bp': '♟', 'bn': '♞', 'bb': '♝', 'br': '♜', 'bq': '♛', 'bk': '♚'
-    };
-    return symbols[piece.color + piece.type] || '';
-  };
+
   return (
-    <div className="chessboard-wrapper">
+    <div className={`chessboard-wrapper theme-${theme || 'classic'}`}>
       {game ? (
-        <>
-          <div style={{ padding: '1rem', backgroundColor: '#f0f0f0', marginBottom: '1rem', borderRadius: '4px' }}>
-            <p style={{ margin: '0.5rem 0', fontSize: '14px' }}>
-              <strong>Selected:</strong> {selectedSquare || 'None'} | <strong>Legal Moves:</strong> {legalMoves.length}
-            </p>
+        <div className="board-surface">
+          <div className="board-grid">
+            {ranks.map((rank) =>
+              files.map((file) => {
+                const square = `${file}${rank}`;
+                const piece = game.get(square);
+                const isLight = (file.charCodeAt(0) + rank.charCodeAt(0)) % 2 === 1;
+                const isSelected = selectedSquare === square;
+                const isLegal = legalMoves.includes(square);
+                const isCapture = isLegal && piece && piece.color !== game.turn();
+
+                const squareClass = [
+                  'square',
+                  isLight ? 'square--light' : 'square--dark',
+                  isSelected ? 'square--selected' : '',
+                  isLegal ? 'square--legal' : '',
+                  isCapture ? 'square--capture' : ''
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+
+                return (
+                  <button
+                    key={square}
+                    type="button"
+                    className={squareClass}
+                    onClick={() => handleSquareClick(square)}
+                    aria-label={`Square ${square}`}
+                  >
+                    {piece && pieceStyle === 'svg' && (
+                      <img
+                        className="piece-image"
+                        src={pieceSprites[piece.color][piece.type]}
+                        alt=""
+                        draggable="false"
+                      />
+                    )}
+                    {piece && pieceStyle !== 'svg' && (
+                      <span className={`piece piece--${piece.color}`}>
+                        {pieceLetters[piece.color][piece.type]}
+                      </span>
+                    )}
+                    {rank === '1' && (
+                      <span className="file-label">{file}</span>
+                    )}
+                    {file === 'a' && (
+                      <span className="rank-label">{rank}</span>
+                    )}
+                  </button>
+                );
+              })
+            )}
           </div>
-          
-          <div style={{ 
-            display: 'inline-block', 
-            border: '2px solid #333',
-            backgroundColor: '#8B7355'
-          }}>
-            {ranks.map(rank => (
-              <div key={rank} style={{ display: 'flex' }}>
-                {files.map(file => {
-                  const square = file + rank;
-                  const piece = game.get(square);
-                  const isLight = (file.charCodeAt(0) + rank.charCodeAt(0)) % 2 === 1;
-                  const isSelected = selectedSquare === square;
-                  const isLegal = legalMoves.includes(square);
-                  
-                  let bgColor = isLight ? '#F0D9B5' : '#B58863';
-                  if (isSelected) bgColor = 'rgba(247, 247, 0, 0.6)';
-                  else if (isLegal) bgColor = piece ? 'rgba(255, 0, 0, 0.4)' : 'rgba(0, 200, 0, 0.4)';
-                  
-                  return (
-                    <div
-                      key={square}
-                      onClick={() => handleSquareClick(square)}
-                      style={{
-                        width: '60px',
-                        height: '60px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: bgColor,
-                        cursor: 'pointer',
-                        fontSize: '32px',
-                        userSelect: 'none',
-                        border: isSelected ? '3px solid gold' : 'none'
-                      }}
-                    >
-                      {piece ? getPieceSymbol(piece) : ''}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          
           <div className="board-legend">
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: 'rgba(247, 247, 0, 0.6)' }}></span>
+              <span className="legend-color legend-selected"></span>
               Selected piece
             </div>
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: 'rgba(0, 200, 0, 0.4)' }}></span>
+              <span className="legend-color legend-move"></span>
               Legal move
             </div>
             <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: 'rgba(255, 0, 0, 0.4)' }}></span>
+              <span className="legend-color legend-capture"></span>
               Capture move
             </div>
           </div>
-        </>
+        </div>
       ) : (
         <p>Loading game...</p>
       )}
