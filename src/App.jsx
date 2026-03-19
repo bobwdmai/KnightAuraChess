@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import KnightJumpChess from './KnightJumpChess.js';
 import ChessBoard from './components/ChessBoard.jsx';
+import LearnPage from './components/LearnPage.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import { db, firebaseEnabled } from './utils/firebase.js';
 import './App.css';
@@ -87,6 +88,7 @@ const LEARN_STEPS = [
 
 export default function App() {
   const { user, authReady, displayName, rating, signInWithGoogle, signInAnonymously, signOut } = useAuth();
+  const [currentPage, setCurrentPage] = useState('game');
   const [game, setGame] = useState(() => createNewGame());
   const [moveHistory, setMoveHistory] = useState([]);
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -798,7 +800,11 @@ export default function App() {
       </header>
 
       {/* ── Main Layout ── */}
-      <main className="layout">
+      {currentPage === 'learn' ? (
+        <LearnPage onBack={() => setCurrentPage('game')} />
+      ) : (
+        <>
+          <main className="layout">
         {/* ── Board Column ── */}
         <section className="board-section">
           {/* Status text */}
@@ -947,7 +953,6 @@ export default function App() {
               { key: 'moves', icon: '☰', label: 'Moves' },
               { key: 'games', icon: '⚔', label: 'Games' },
               { key: 'settings', icon: '⚙', label: 'Settings' },
-              { key: 'learn', icon: '📖', label: 'Learn' }
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -958,6 +963,14 @@ export default function App() {
                 <span className="tab-label">{tab.label}</span>
               </button>
             ))}
+            <button
+              className="tab-btn"
+              onClick={() => setCurrentPage('learn')}
+              title="Learn the rules"
+            >
+              <span className="tab-icon">📖</span>
+              <span className="tab-label">Learn</span>
+            </button>
           </nav>
 
           <div className="tab-content">
@@ -1162,47 +1175,6 @@ export default function App() {
               </div>
             )}
 
-            {/* ── Learn Tab ── */}
-            {activeTab === 'learn' && (
-              <div className="tab-panel learn-panel">
-                <div className="learn-header">
-                  <h3>How to Play</h3>
-                  <p className="learn-subtitle">KNightAuraChess — standard chess with knight-powered jumping</p>
-                </div>
-
-                <div className="learn-steps">
-                  {LEARN_STEPS.map((step, idx) => (
-                    <div key={idx} className={`learn-step learn-step--${step.highlight}`}>
-                      <div className="learn-step-number">{idx + 1}</div>
-                      <div className="learn-step-content">
-                        <h4>{step.title}</h4>
-                        <span className="learn-step-subtitle">{step.subtitle}</span>
-                        <p>{step.description}</p>
-                        <div className="learn-mini-board">
-                          {step.board.map((row, ri) => (
-                            <div key={ri} className="learn-mini-row">
-                              {row.map((cell, ci) => (
-                                <div key={ci} className={`learn-mini-cell ${
-                                  cell === '✦' ? 'learn-cell--aura' :
-                                  cell && cell !== '' ? 'learn-cell--piece' : ''
-                                }`}>
-                                  {cell === '✦' ? '✦' : cell}
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                        <p className="learn-caption">{step.caption}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="learn-footer">
-                  <p>Combine classic chess tactics with jump mechanics for deeper, more dynamic strategy!</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </main>
@@ -1211,6 +1183,8 @@ export default function App() {
         <span>KNightAuraChess</span>
         <span>A chess variant with knight-empowered jumping</span>
       </footer>
+        </>
+      )}
     </div>
   );
 }
