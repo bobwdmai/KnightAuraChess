@@ -423,18 +423,25 @@ export default function App() {
         let result = null;
         let winner = null;
 
-        const kingWinner = gameCopy.getWinnerByKingCapture?.();
-        if (kingWinner) {
+        const currentFen = gameCopy.fen().split(' ')[0];
+        const hasWhiteKing = currentFen.includes('K');
+        const hasBlackKing = currentFen.includes('k');
+
+        if (!hasWhiteKing) {
           nextStatus = 'completed';
-          winner = kingWinner;
-          result = `${formatTurn(kingWinner)} wins by king capture`;
-        } else if (gameCopy.isCheckmateRider?.()) {
+          winner = 'b';
+          result = 'Black wins by king capture';
+        } else if (!hasBlackKing) {
+          nextStatus = 'completed';
+          winner = 'w';
+          result = 'White wins by king capture';
+        } else if (gameCopy.isCheckmate()) {
           nextStatus = 'completed';
           winner = gameCopy.turn() === 'w' ? 'b' : 'w';
           result = `${formatTurn(winner)} wins by checkmate`;
-        } else if (gameCopy.isStalemateRider?.()) {
+        } else if (gameCopy.isStalemate() || gameCopy.isDraw()) {
           nextStatus = 'draw';
-          result = 'Stalemate';
+          result = 'Draw';
         }
 
         let whiteRatingAfter = data.whiteRating ?? 1200;
