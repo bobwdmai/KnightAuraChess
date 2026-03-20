@@ -129,6 +129,12 @@ export default function App() {
 
   const isOnline = Boolean(gameId);
 
+  // Auto-flip board when playing as black
+  useEffect(() => {
+    if (playerColor === 'b') setFlipped(true);
+    else if (playerColor === 'w') setFlipped(false);
+  }, [playerColor]);
+
   const playerColor = useMemo(() => {
     if (!user || !gameData) return null;
     if (gameData.whiteId === user.uid) return 'w';
