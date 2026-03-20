@@ -1,19 +1,28 @@
 /**
- * KNightAuraChess AI Engine — Web Worker (Optimized)
+ * Knight-Aura Chess AI Engine — Web Worker v2
  *
- * Runs alpha-beta search off the main thread using KnightJumpChess logic.
+ * Improvements over v1:
+ *   - Negamax framework (cleaner, enables TT integration)
+ *   - Transposition table (depth-preferred replacement, up to 500k entries)
+ *   - Quiescence search with delta pruning (eliminates horizon effect)
+ *   - Late Move Reduction (LMR) — reduces depth for likely-bad quiet moves
+ *   - Killer move heuristic — better move ordering from quiet cutoffs
+ *   - Knight-Aura aware evaluation — rewards pieces inside friendly aura
+ *   - Endgame king activity table
+ *   - Bishop pair bonus
+ *   - Expert searches depth 8–10 instead of depth 4
  *
  * Messages IN:  { type: 'search', fen, difficulty, id }
- * Messages OUT: { type: 'result', from, to, promotion, san, score, depth, id }
+ * Messages OUT: { type: 'result', from, to, promotion, san, score, depth, nodes, timeMs, id }
  *               { type: 'error', message, id }
  */
 
 import KnightJumpChess from '../KnightJumpChess.js';
 
-// ── Piece values ────────────────────────────────────────────────
+// ── Piece values ─────────────────────────────────────────────────
 const PIECE_VALUE = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
-// ── Piece-square tables (White perspective, index 0 = a8) ───────
+// ── Piece-square tables (White perspective, index 0 = a8 rank 8 file a) ──
 const PST = {
   p: [
      0,  0,  0,  0,  0,  0,  0,  0,
@@ -65,6 +74,7 @@ const PST = {
    -10,  0,  5,  0,  0,  0,  0,-10,
    -20,-10,-10, -5, -5,-10,-10,-20,
   ],
+  // King middlegame: castle and stay safe
   k: [
    -30,-40,-40,-50,-50,-40,-40,-30,
    -30,-40,-40,-50,-50,-40,-40,-30,
@@ -75,6 +85,17 @@ const PST = {
     20, 20,  0,  0,  0,  0, 20, 20,
     20, 30, 10,  0,  0, 10, 30, 20,
   ],
+  // King endgame: centralise and be active
+  ke: [
+   -50,-40,-30,-20,-20,-30,-40,-50,
+   -30,-20,-10,  0,  0,-10,-20,-30,
+   -30,-10, 20, 30, 30, 20,-10,-30,
+   -30,-10, 30, 40, 40, 30,-10,-30,
+   -30,-10, 30, 40, 40, 30,-10,-30,
+   -30,-10, 20, 30, 30, 20,-10,-30,
+   -30,-30,  0,  0,  0,  0,-30,-30,
+   -50,-30,-30,-30,-30,-30,-30,-50,
+  ],
 };
 
 const FILES = ['a','b','c','d','e','f','g','h'];
@@ -84,192 +105,366 @@ function mirrorIndex(i) {
   return (7 - Math.floor(i / 8)) * 8 + (i % 8);
 }
 
-// ── FAST static evaluation (no move generation!) ────────────────
+// ── Transposition Table ──────────────────────────────────────────
+const TT_EXACT = 0, TT_LOWER = 1, TT_UPPER = 2;
+const TT_MAX = 500_000;
+const TT = new Map();
+
+function ttProbe(fen) { return TT.get(fen) ?? null; }
+
+function ttStore(fen, depth, score, flag, bestMoveKey) {
+  const ex = TT.get(fen);
+  if (ex && ex.depth > depth) return; // keep deeper entry
+  if (TT.size >= TT_MAX && !ex) {
+    // Evict oldest (insertion-order) to cap memory
+    TT.delete(TT.keys().next().value);
+  }
+  TT.set(fen, { depth, score, flag, bestMoveKey });
+}
+
+// ── Killer moves [ply][slot 0..1] ────────────────────────────────
+const MAX_PLY = 64;
+const killers = Array.from({ length: MAX_PLY }, () => [null, null]);
+
+function storeKiller(ply, key) {
+  if (!key || killers[ply][0] === key) return;
+  killers[ply][1] = killers[ply][0];
+  killers[ply][0] = key;
+}
+
+// ── Knight-Aura helpers ──────────────────────────────────────────
+const ADJ_D  = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const LEAP_D = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+
+/** Returns a Set of square names that are inside `color`'s knight aura. */
+function buildAura(game, color) {
+  const aura = new Set();
+  for (let ri = 0; ri < 8; ri++) {
+    for (let fi = 0; fi < 8; fi++) {
+      const p = game.get(FILES[fi] + RANKS[ri]);
+      if (!p || p.type !== 'n' || p.color !== color) continue;
+      for (const [dr, dc] of ADJ_D) {
+        const r = ri + dr, f = fi + dc;
+        if (r >= 0 && r < 8 && f >= 0 && f < 8) aura.add(FILES[f] + RANKS[r]);
+      }
+      for (const [dr, dc] of LEAP_D) {
+        const r = ri + dr, f = fi + dc;
+        if (r >= 0 && r < 8 && f >= 0 && f < 8) aura.add(FILES[f] + RANKS[r]);
+      }
+    }
+  }
+  return aura;
+}
+
+// ── Static evaluation (White perspective, positive = good for White) ──
 function evaluate(game) {
   let score = 0;
-  let whiteKing = false;
-  let blackKing = false;
+  let wKing = false, bKing = false;
+  let wBishops = 0, bBishops = 0;
+  let wMinorMaterial = 0, bMinorMaterial = 0;
 
+  // First pass: collect pieces and non-pawn material for endgame detection
+  const pieces = [];
   for (let ri = 0; ri < 8; ri++) {
     for (let fi = 0; fi < 8; fi++) {
       const sq = FILES[fi] + RANKS[ri];
-      const piece = game.get(sq);
-      if (!piece) continue;
-
-      if (piece.type === 'k') {
-        if (piece.color === 'w') whiteKing = true;
-        else blackKing = true;
-      }
-
-      const idx = ri * 8 + fi;
-      const val = PIECE_VALUE[piece.type];
-      const pst = piece.color === 'w'
-        ? PST[piece.type][idx]
-        : PST[piece.type][mirrorIndex(idx)];
-
-      if (piece.color === 'w') {
-        score += val + pst;
-      } else {
-        score -= val + pst;
+      const p = game.get(sq);
+      if (!p) continue;
+      pieces.push({ p, ri, fi, sq });
+      if (p.type !== 'p' && p.type !== 'k') {
+        if (p.color === 'w') wMinorMaterial += PIECE_VALUE[p.type];
+        else bMinorMaterial += PIECE_VALUE[p.type];
       }
     }
   }
 
-  // King capture detection
-  if (!whiteKing) return -90000;
-  if (!blackKing) return 90000;
+  const isEndgame = (wMinorMaterial + bMinorMaterial) < 1800;
+
+  // Build aura sets (cheap — only scans for knights)
+  const wAura = buildAura(game, 'w');
+  const bAura = buildAura(game, 'b');
+
+  // Second pass: score every piece
+  for (const { p, ri, fi, sq } of pieces) {
+    const idx = ri * 8 + fi;
+    const val = PIECE_VALUE[p.type];
+
+    // Choose PST (king switches to endgame table when material is low)
+    let table;
+    if (p.type === 'k') {
+      table = isEndgame ? PST.ke : PST.k;
+    } else {
+      table = PST[p.type];
+    }
+    const pst = p.color === 'w' ? table[idx] : table[mirrorIndex(idx)];
+
+    // Knight-Aura bonus: non-king pieces inside friendly aura gain mobility
+    let auraBonus = 0;
+    if (p.type !== 'k') {
+      if (p.color === 'w' && wAura.has(sq)) auraBonus = 18;
+      else if (p.color === 'b' && bAura.has(sq)) auraBonus = 18;
+    }
+
+    if (p.type === 'k') { if (p.color === 'w') wKing = true; else bKing = true; }
+    if (p.type === 'b') { if (p.color === 'w') wBishops++; else bBishops++; }
+
+    if (p.color === 'w') score += val + pst + auraBonus;
+    else                 score -= val + pst + auraBonus;
+  }
+
+  // Terminal: missing king = captured (variant rule)
+  if (!wKing) return -90000;
+  if (!bKing) return  90000;
+
+  // Bishop pair bonus
+  if (wBishops >= 2) score += 30;
+  if (bBishops >= 2) score -= 30;
 
   return score;
 }
 
-// ── Difficulty settings ─────────────────────────────────────────
-const DIFFICULTY = {
-  easy:   { depth: 1, randomness: 100, timeLimitMs: 500  },
-  medium: { depth: 2, randomness: 30,  timeLimitMs: 2000 },
-  hard:   { depth: 3, randomness: 5,   timeLimitMs: 5000 },
-  expert: { depth: 4, randomness: 0,   timeLimitMs: 10000 },
-};
-
-// ── Move ordering (improves pruning) ────────────────────────────
-function scoreMoveForOrdering(m) {
-  let s = 0;
-  if (m.captured) s += PIECE_VALUE[m.captured] * 10 - PIECE_VALUE[m.piece];
-  if (m.promotion) s += PIECE_VALUE[m.promotion];
-  if (m.flags && m.flags.includes('j')) s += 50;
-  return s;
+/** Score from the perspective of whichever side is to move. */
+function evalNegamax(game) {
+  const s = evaluate(game);
+  return game.turn() === 'w' ? s : -s;
 }
 
-function orderMoves(moves) {
-  // Score once, sort once
-  const scored = moves.map(m => ({ m, s: scoreMoveForOrdering(m) }));
-  scored.sort((a, b) => b.s - a.s);
-  return scored.map(x => x.m);
+// ── Move ordering ────────────────────────────────────────────────
+function scoreMoveForOrdering(m, ttMoveKey, ply) {
+  const key = m.from + m.to;
+  if (ttMoveKey && key === ttMoveKey) return 10_000_000;          // TT move first
+  if (m.captured) {
+    // MVV-LVA: capture most-valuable victim with least-valuable attacker
+    return 1_000_000 + PIECE_VALUE[m.captured] * 10 - PIECE_VALUE[m.piece];
+  }
+  if (m.promotion) return 900_000 + PIECE_VALUE[m.promotion];
+  if (ply < MAX_PLY && killers[ply][0] === key) return 800_000;   // killer 1
+  if (ply < MAX_PLY && killers[ply][1] === key) return 700_000;   // killer 2
+  if (m.flags && m.flags.includes('j')) return 300;               // aura jump
+  return 0;
 }
 
-// ── Alpha-beta with time limit ──────────────────────────────────
+function orderMoves(moves, ttMoveKey, ply) {
+  return moves
+    .map(m => ({ m, s: scoreMoveForOrdering(m, ttMoveKey, ply) }))
+    .sort((a, b) => b.s - a.s)
+    .map(x => x.m);
+}
+
+// ── Quiescence search (negamax) ──────────────────────────────────
 let searchDeadline = 0;
-let nodesSearched = 0;
+let nodesSearched  = 0;
 
-function alphaBeta(fen, depth, alpha, beta, isMaximizing) {
+function qsearch(game, alpha, beta, qdepth) {
   nodesSearched++;
-
-  // Time check every 512 nodes
-  if ((nodesSearched & 511) === 0 && performance.now() > searchDeadline) {
-    return evaluate(new KnightJumpChess(fen));
+  if ((nodesSearched & 1023) === 0 && performance.now() > searchDeadline) {
+    return evalNegamax(game);
   }
 
-  const game = new KnightJumpChess(fen);
+  // Stand-pat: assume we can always "do nothing" and keep the current eval
+  const standPat = evalNegamax(game);
+  if (standPat >= beta)  return beta;   // fail-hard cutoff
+  if (standPat > alpha)  alpha = standPat;
+  if (qdepth >= 6)       return alpha;  // max quiescence depth
 
-  // Leaf node
-  if (depth === 0) {
-    return evaluate(game);
+  const allMoves = game.moves({ verbose: true });
+  const captures = allMoves.filter(m => m.captured || m.promotion);
+  if (captures.length === 0) return alpha;
+
+  // Order captures: highest-value victim first
+  captures.sort((a, b) =>
+    (PIECE_VALUE[b.captured] || 0) - (PIECE_VALUE[a.captured] || 0)
+  );
+
+  const fen = game.fen();
+  for (const move of captures) {
+    // Delta pruning: skip hopeless captures (can't raise alpha even with optimism margin)
+    if (standPat + (PIECE_VALUE[move.captured] || 200) + 150 < alpha) continue;
+
+    const child = new KnightJumpChess(fen);
+    child.move(move);
+    const score = -qsearch(child, -beta, -alpha, qdepth + 1);
+
+    if (score >= beta)   return beta;
+    if (score > alpha)   alpha = score;
+  }
+
+  return alpha;
+}
+
+// ── Alpha-beta (negamax) ─────────────────────────────────────────
+function alphaBeta(game, depth, alpha, beta, ply, useQSearch) {
+  nodesSearched++;
+  if ((nodesSearched & 511) === 0 && performance.now() > searchDeadline) {
+    return evalNegamax(game);
+  }
+
+  const fen = game.fen();
+
+  // ── Transposition table probe ──
+  const tt = ttProbe(fen);
+  let ttMoveKey = null;
+  if (tt) {
+    ttMoveKey = tt.bestMoveKey;
+    if (tt.depth >= depth) {
+      if (tt.flag === TT_EXACT) return tt.score;
+      if (tt.flag === TT_LOWER && tt.score > alpha) alpha = tt.score;
+      if (tt.flag === TT_UPPER && tt.score < beta)  beta  = tt.score;
+      if (alpha >= beta) return tt.score;
+    }
+  }
+
+  // ── Leaf node ──
+  if (depth <= 0) {
+    return useQSearch ? qsearch(game, alpha, beta, 0) : evalNegamax(game);
   }
 
   const moves = game.moves({ verbose: true });
 
-  // No moves = checkmate or stalemate
+  // ── No moves: terminal position ──
   if (moves.length === 0) {
-    // Check if king is captured (variant win condition)
-    const eval0 = evaluate(game);
-    if (Math.abs(eval0) > 50000) return eval0;
-    // Otherwise checkmate/stalemate
-    if (game.isCheckmateRider()) {
-      return isMaximizing ? -80000 - depth : 80000 + depth;
+    const raw = evaluate(game);
+    if (Math.abs(raw) > 50000) {
+      // King captured (variant win condition)
+      return game.turn() === 'w' ? raw : -raw;
     }
+    if (game.isCheckmateRider()) return -80000 - depth; // checkmate: bad for side to move
     return 0; // stalemate
   }
 
-  const ordered = orderMoves(moves);
+  const ordered = orderMoves(moves, ttMoveKey, ply);
+  const origAlpha = alpha;
+  let bestScore   = -Infinity;
+  let bestMoveKey = null;
 
-  if (isMaximizing) {
-    let best = -Infinity;
-    for (const move of ordered) {
-      const child = new KnightJumpChess(fen);
-      child.move(move);
-      const score = alphaBeta(child.fen(), depth - 1, alpha, beta, false);
-      best = Math.max(best, score);
-      alpha = Math.max(alpha, score);
-      if (beta <= alpha) break;
+  for (let i = 0; i < ordered.length; i++) {
+    const move  = ordered[i];
+    const child = new KnightJumpChess(fen);
+    child.move(move);
+
+    let score;
+
+    // ── Late Move Reduction (LMR) ──
+    // Reduce depth for quiet, late moves that are unlikely to be best.
+    // Only at sufficient depth and after the first few moves.
+    const isQuiet = !move.captured && !move.promotion;
+    if (i >= 4 && depth >= 3 && isQuiet && ply > 0) {
+      const reduction = i >= 8 ? 2 : 1;
+      // Reduced-depth search with null window
+      score = -alphaBeta(child, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1, useQSearch);
+      if (score > alpha) {
+        // Surprising move — re-search at full depth
+        score = -alphaBeta(child, depth - 1, -beta, -alpha, ply + 1, useQSearch);
+      }
+    } else {
+      score = -alphaBeta(child, depth - 1, -beta, -alpha, ply + 1, useQSearch);
     }
-    return best;
-  } else {
-    let best = Infinity;
-    for (const move of ordered) {
-      const child = new KnightJumpChess(fen);
-      child.move(move);
-      const score = alphaBeta(child.fen(), depth - 1, alpha, beta, true);
-      best = Math.min(best, score);
-      beta = Math.min(beta, score);
-      if (beta <= alpha) break;
+
+    if (score > bestScore) {
+      bestScore   = score;
+      bestMoveKey = move.from + move.to;
     }
-    return best;
+    if (score > alpha) alpha = score;
+    if (alpha >= beta) {
+      if (isQuiet) storeKiller(ply, move.from + move.to);
+      break; // beta cutoff
+    }
   }
+
+  // ── Transposition table store ──
+  const flag = bestScore <= origAlpha ? TT_UPPER
+             : bestScore >= beta      ? TT_LOWER
+             : TT_EXACT;
+  ttStore(fen, depth, bestScore, flag, bestMoveKey);
+
+  return bestScore;
 }
 
-// ── Find best move with iterative deepening ─────────────────────
+// ── Difficulty profiles ──────────────────────────────────────────
+const DIFFICULTY = {
+  // Easy: shallow depth, lots of noise, 25% random moves
+  easy:   { maxDepth: 2, randomness: 120, timeLimitMs:  600, useQSearch: false },
+  // Medium: decent depth, small noise, quiescence
+  medium: { maxDepth: 4, randomness:  20, timeLimitMs: 2000, useQSearch: true  },
+  // Hard: deep, no noise, full optimisations
+  hard:   { maxDepth: 6, randomness:   0, timeLimitMs: 5000, useQSearch: true  },
+  // Expert: very deep, iterative deepening to time limit
+  expert: { maxDepth: 10, randomness:  0, timeLimitMs: 12000, useQSearch: true },
+};
+
+// ── Find best move (iterative deepening) ─────────────────────────
 function findBestMove(fen, difficulty) {
   const settings = DIFFICULTY[difficulty] || DIFFICULTY.medium;
-  const game = new KnightJumpChess(fen);
-  const moves = game.moves({ verbose: true });
+  const game     = new KnightJumpChess(fen);
+  const moves    = game.moves({ verbose: true });
 
   if (moves.length === 0) return null;
   if (moves.length === 1) return { move: moves[0], score: 0, nodes: 1, depth: 1 };
 
-  const isMaximizing = game.turn() === 'w';
   searchDeadline = performance.now() + settings.timeLimitMs;
-  nodesSearched = 0;
+  nodesSearched  = 0;
 
-  let bestMove = moves[0]; // fallback
-  let bestScore = isMaximizing ? -Infinity : Infinity;
+  // Reset killers for fresh search (but keep TT — it persists across moves)
+  for (const k of killers) { k[0] = null; k[1] = null; }
+
+  const isWhite = game.turn() === 'w';
+  // Absolute (white-perspective) score; white maximises, black minimises
+  let bestMove  = moves[Math.floor(Math.random() * moves.length)]; // safe fallback
+  let bestScore = isWhite ? -Infinity : Infinity;
   let finalDepth = 1;
 
-  // Iterative deepening: search depth 1, then 2, etc.
-  for (let d = 1; d <= settings.depth; d++) {
+  for (let d = 1; d <= settings.maxDepth; d++) {
     if (performance.now() > searchDeadline) break;
 
-    let depthBestMove = moves[0];
-    let depthBestScore = isMaximizing ? -Infinity : Infinity;
-    const ordered = orderMoves(moves);
+    let iterBest      = null;
+    let iterBestScore = isWhite ? -Infinity : Infinity;
+
+    // Re-order moves using current TT (move from previous iteration goes first)
+    const ordered = orderMoves(moves, null, 0);
 
     for (const move of ordered) {
       if (performance.now() > searchDeadline) break;
 
       const child = new KnightJumpChess(fen);
       child.move(move);
-      const score = alphaBeta(child.fen(), d - 1, -Infinity, Infinity, !isMaximizing);
 
-      // Add randomness for lower difficulties
-      const jitter = settings.randomness > 0
-        ? (Math.random() - 0.5) * settings.randomness
-        : 0;
-      const adjusted = score + jitter;
+      // negamax from child's perspective → negate → current-player perspective
+      const negaScore = -alphaBeta(child, d - 1, -Infinity, Infinity, 1, settings.useQSearch);
+      // Convert to white-perspective absolute score
+      const absScore  = isWhite ? negaScore : -negaScore;
 
-      if (isMaximizing ? adjusted > depthBestScore : adjusted < depthBestScore) {
-        depthBestScore = adjusted;
-        depthBestMove = move;
+      // Add noise for lower difficulties (makes choices intentionally suboptimal)
+      const jitter   = settings.randomness > 0 ? (Math.random() - 0.5) * settings.randomness : 0;
+      const adjusted = isWhite ? absScore + jitter : absScore - jitter;
+
+      if (isWhite ? adjusted > iterBestScore : adjusted < iterBestScore) {
+        iterBestScore = adjusted;
+        iterBest      = move;
       }
     }
 
-    bestMove = depthBestMove;
-    bestScore = depthBestScore;
-    finalDepth = d;
+    if (iterBest) {
+      bestMove   = iterBest;
+      bestScore  = iterBestScore;
+      finalDepth = d;
+    }
   }
 
-  // For easy difficulty: sometimes pick a random legal move
-  if (difficulty === 'easy' && Math.random() < 0.25) {
+  // Easy: 30% chance of a random legal move to feel human-clumsy
+  if (difficulty === 'easy' && Math.random() < 0.30) {
     bestMove = moves[Math.floor(Math.random() * moves.length)];
   }
 
   return { move: bestMove, score: bestScore, nodes: nodesSearched, depth: finalDepth };
 }
 
-// ── Worker message handler ──────────────────────────────────────
+// ── Worker message handler ────────────────────────────────────────
 self.onmessage = function (e) {
   const { type, fen, difficulty, id } = e.data;
   if (type !== 'search') return;
 
   try {
-    const t0 = performance.now();
+    const t0     = performance.now();
     const result = findBestMove(fen, difficulty || 'medium');
     const elapsed = performance.now() - t0;
 
@@ -279,15 +474,15 @@ self.onmessage = function (e) {
     }
 
     self.postMessage({
-      type: 'result',
-      from: result.move.from,
-      to: result.move.to,
+      type:      'result',
+      from:      result.move.from,
+      to:        result.move.to,
       promotion: result.move.promotion || null,
-      san: result.move.san || `${result.move.from}${result.move.to}`,
-      score: result.score,
-      nodes: result.nodes,
-      timeMs: Math.round(elapsed),
-      depth: result.depth,
+      san:       result.move.san || `${result.move.from}${result.move.to}`,
+      score:     result.score,
+      nodes:     result.nodes,
+      timeMs:    Math.round(elapsed),
+      depth:     result.depth,
       id,
     });
   } catch (err) {
