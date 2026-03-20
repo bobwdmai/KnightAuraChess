@@ -112,6 +112,7 @@ export default function App() {
   const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState('play');
   const [profileModalUid, setProfileModalUid] = useState(null);
+  const [pendingDm, setPendingDm] = useState(null);
   const [moveTimestamps, setMoveTimestamps] = useState([{ white: 0, black: 0 }]);
   const [currentMoveStartTime, setCurrentMoveStartTime] = useState(Date.now());
   const lastAiFenRef = useRef(null);
@@ -1257,6 +1258,8 @@ export default function App() {
                 currentUserName={displayName}
                 currentUserPhotoURL={profile?.photoURL || null}
                 onPlayerClick={(p) => setProfileModalUid(p.id)}
+                pendingDm={pendingDm}
+                onPendingDmHandled={() => setPendingDm(null)}
               />
             )}
 
@@ -1278,7 +1281,8 @@ export default function App() {
           currentUser={user}
           currentUserName={displayName}
           onClose={() => setProfileModalUid(null)}
-          onOpenDm={() => {
+          onOpenDm={({ chatId, partnerUid, partnerName }) => {
+            setPendingDm({ chatId, partnerUid, partnerName });
             setProfileModalUid(null);
             setActiveTab('social');
           }}

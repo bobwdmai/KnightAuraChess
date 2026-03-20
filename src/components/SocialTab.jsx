@@ -264,8 +264,15 @@ function FriendsSection({ currentUser, currentUserName, onOpenDm, onPlayerClick 
 
 // ─── Main Social Tab ──────────────────────────────────────────────────────────
 
-export default function SocialTab({ currentUser, currentUserName, currentUserPhotoURL, onPlayerClick }) {
+export default function SocialTab({ currentUser, currentUserName, currentUserPhotoURL, onPlayerClick, pendingDm, onPendingDmHandled }) {
   const [activeDm, setActiveDm] = useState(null);
+
+  useEffect(() => {
+    if (pendingDm) {
+      setActiveDm(pendingDm);
+      onPendingDmHandled?.();
+    }
+  }, [pendingDm]);
 
   return (
     <div className="tab-panel social-tab">
