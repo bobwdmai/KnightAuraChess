@@ -7,7 +7,7 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn(); // Simplified to allow opponent rating updates
+      allow write: if isSignedIn();
     }
 
     match /games/{gameId} {
@@ -35,6 +35,21 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.from == request.auth.uid;
       allow update: if isSignedIn() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.to == request.auth.uid
+      );
+      // Allow delete for declining/removing friends
+      allow delete: if isSignedIn() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.to == request.auth.uid
+      );
+    }
+
+    match /game_challenges/{challengeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.from == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.to == request.auth.uid;
+      allow delete: if isSignedIn() && (
         resource.data.from == request.auth.uid ||
         resource.data.to == request.auth.uid
       );
