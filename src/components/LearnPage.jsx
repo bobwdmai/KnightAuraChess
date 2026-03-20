@@ -39,19 +39,20 @@ export default function LearnPage({ onBack }) {
           ← Back to Game
         </button>
         <div className="learn-page-title">
-          <h1>♞ How to Play KNightAuraChess</h1>
-          <p>Standard chess — supercharged by knight proximity</p>
+          <h1>♞ How to Play Knight-Aura Chess</h1>
+          <p>Standard chess — supercharged by the power of the horse</p>
         </div>
       </header>
 
       {/* ── Hero ── */}
       <section className="learn-hero">
         <div className="learn-hero-text">
-          <h2>The Knight Changes Everything</h2>
+          <h2>Unleash the Power of the Horse</h2>
           <p>
-            In KNightAuraChess, pieces near a friendly knight gain the power to
-            <strong> jump over one blocking piece</strong>. This opens up
-            surprise tactics and deeper strategic play.
+            In conventional chess, only the knight can jump over other pieces.
+            In <strong>Knight-Aura Chess</strong>, that jumping power radiates outward —
+            any friendly piece within the knight's aura can <strong>leap over one blocker</strong>,
+            opening up surprise tactics, deep combinations, and a whole new layer of strategy.
           </p>
         </div>
       </section>
@@ -60,12 +61,13 @@ export default function LearnPage({ onBack }) {
       <section className="learn-section learn-section--green">
         <div className="learn-section-badge">1</div>
         <div className="learn-section-body">
-          <h3>The Knight Aura Zone</h3>
-          <p className="learn-section-subtitle">Proximity is power</p>
+          <h3>The Knight's Aura Zone</h3>
+          <p className="learn-section-subtitle">Ride close to the horse, gain its power</p>
           <p>
-            Any friendly piece that is <strong>adjacent</strong> to a knight (all 8 surrounding
-            squares) <em>or</em> on a square <strong>reachable by a knight's L-shaped move</strong> gains
-            the ability to jump. That's up to <strong>16 squares</strong> of influence.
+            Any friendly piece that is <strong>adjacent</strong> to a knight (the 8 surrounding
+            squares) <em>or</em> on a square <strong>reachable by the knight's L-shaped move</strong> is
+            inside the aura. That's up to <strong>16 empowered squares</strong> — pieces there
+            inherit the horse's ability to jump.
           </p>
 
           <div className="learn-aura-grid-wrapper">
@@ -113,12 +115,12 @@ export default function LearnPage({ onBack }) {
       <section className="learn-section learn-section--blue">
         <div className="learn-section-badge">2</div>
         <div className="learn-section-body">
-          <h3>Jump Exactly One Blocker</h3>
-          <p className="learn-section-subtitle">Leap over a single piece</p>
+          <h3>Ride the Aura — Jump!</h3>
+          <p className="learn-section-subtitle">One leap, then keep going</p>
           <p>
-            A piece inside the knight's aura can jump over <strong>exactly one</strong> blocking
-            piece along its normal movement path, then keep sliding. It may capture
-            after the jump.
+            A piece inside the knight's aura can jump over <strong>exactly one</strong> blocker
+            along its normal movement path, then keep sliding as usual. It may
+            capture on any square it lands — even right after the jump.
           </p>
           <div className="learn-jump-demo">
             <div className="learn-jump-track">
@@ -130,7 +132,7 @@ export default function LearnPage({ onBack }) {
               <div className="learn-jump-cell learn-jump-cell--capture">♝</div>
             </div>
             <div className="learn-jump-arrow">
-              <span>♖ jumps over ♟ → lands on ○ or captures ♝</span>
+              <span>♖ leaps over ♟ — lands on ○ or captures ♝</span>
             </div>
           </div>
         </div>
@@ -140,11 +142,12 @@ export default function LearnPage({ onBack }) {
       <section className="learn-section learn-section--red">
         <div className="learn-section-badge">3</div>
         <div className="learn-section-body">
-          <h3>Second Blocker Stops You</h3>
-          <p className="learn-section-subtitle">Only one jump per move</p>
+          <h3>One Jump Per Move</h3>
+          <p className="learn-section-subtitle">The horse's gift has limits</p>
           <p>
-            After jumping one piece, the <strong>next piece</strong> on that line blocks further
-            travel. You cannot jump twice in a single move.
+            The knight shares its power for <strong>one leap only</strong>. After clearing
+            the first blocker, the next piece on that line holds the line — you
+            cannot jump it and cannot pass it.
           </p>
           <div className="learn-jump-demo">
             <div className="learn-jump-track">
@@ -156,7 +159,7 @@ export default function LearnPage({ onBack }) {
               <div className="learn-jump-cell learn-jump-cell--nogo">✗</div>
             </div>
             <div className="learn-jump-arrow">
-              <span>♕ jumps ♟ but ♜ stops further travel — cannot pass ♜</span>
+              <span>♕ clears ♟ but ♜ holds the line — cannot pass</span>
             </div>
           </div>
         </div>
@@ -166,12 +169,12 @@ export default function LearnPage({ onBack }) {
       <section className="learn-section learn-section--green">
         <div className="learn-section-badge">4</div>
         <div className="learn-section-body">
-          <h3>Pawns & Kings Jump Too</h3>
-          <p className="learn-section-subtitle">Short-range jumps</p>
+          <h3>Every Piece Gets Wings</h3>
+          <p className="learn-section-subtitle">Pawns & kings leap too</p>
           <p>
-            <strong>Pawns</strong> near a knight can jump one square forward over a blocker.
-            <strong> Kings</strong> can jump one square in any direction when blocked —
-            as long as the landing square is safe.
+            The horse's power reaches everyone. <strong>Pawns</strong> near a knight can
+            jump one square forward over a blocker. <strong>Kings</strong> can jump one square
+            in any safe direction. No piece is too humble to ride the aura.
           </p>
           <div className="learn-jump-demo">
             <div className="learn-jump-mini">
@@ -181,7 +184,7 @@ export default function LearnPage({ onBack }) {
                 <div className="learn-jump-cell learn-jump-cell--piece">♙</div>
                 <div className="learn-jump-cell learn-jump-cell--knight-src">♞</div>
               </div>
-              <span className="learn-jump-col-label">Pawn jumps ♟ (powered by ♞)</span>
+              <span className="learn-jump-col-label">♙ leaps ♟ — riding ♞'s aura</span>
             </div>
           </div>
         </div>
@@ -193,18 +196,18 @@ export default function LearnPage({ onBack }) {
         <div className="learn-summary-grid">
           <div className="learn-summary-card">
             <span className="learn-summary-icon">♞</span>
-            <strong>Aura</strong>
-            <p>8 adjacent + 8 knight-move = 16 squares of influence</p>
+            <strong>The Aura</strong>
+            <p>8 adjacent + 8 knight-move squares = 16 empowered allies</p>
           </div>
           <div className="learn-summary-card">
             <span className="learn-summary-icon">⤴</span>
-            <strong>Jump</strong>
-            <p>Leap over exactly one blocker along normal move path</p>
+            <strong>The Jump</strong>
+            <p>Leap over exactly one blocker, then keep sliding or capture</p>
           </div>
           <div className="learn-summary-card">
             <span className="learn-summary-icon">🛑</span>
-            <strong>Limit</strong>
-            <p>Second blocker stops you — one jump per move only</p>
+            <strong>The Limit</strong>
+            <p>One jump per move — the second blocker holds the line</p>
           </div>
         </div>
       </section>

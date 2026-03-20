@@ -41,9 +41,9 @@ const formatTime = (seconds) => {
 
 const LEARN_STEPS = [
   {
-    title: 'The Knight Aura',
-    subtitle: 'Proximity is power',
-    description: 'Any friendly piece adjacent to a knight — or reachable by a knight\'s L-shaped move — gains the ability to jump.',
+    title: 'The Knight\'s Aura',
+    subtitle: 'Unleash the horse\'s power',
+    description: 'In conventional chess, only the knight can jump. In Knight-Aura Chess, that power radiates outward — any friendly piece inside the knight\'s aura inherits the ability to jump.',
     board: [
       ['','','','','',''],
       ['','','♞','','',''],
@@ -52,41 +52,41 @@ const LEARN_STEPS = [
       ['','','','','',''],
     ],
     highlight: 'green',
-    caption: '✦ = squares in the Knight\'s aura zone',
+    caption: '✦ = squares empowered by the knight\'s aura',
   },
   {
-    title: 'Jump One Blocker',
-    subtitle: 'Leap over a single piece',
-    description: 'A piece in the knight\'s aura can jump over exactly one blocking piece along its normal move path, then keep sliding.',
+    title: 'Ride the Aura — Jump!',
+    subtitle: 'Leap over a single blocker',
+    description: 'A piece riding the knight\'s aura can jump over exactly one blocking piece along its normal move path, then keep sliding — or land for a capture.',
     board: [
       ['♖','','♟','','','♝'],
       ['','','','','',''],
     ],
     highlight: 'blue',
-    caption: '♖ jumps over ♟ and can land on any square beyond — or capture ♝',
+    caption: '♖ leaps over ♟ — lands anywhere beyond, or captures ♝',
   },
   {
-    title: 'Second Blocker Stops',
-    subtitle: 'Only one jump per move',
-    description: 'After jumping one piece, the next piece on that line blocks you. You cannot jump twice in a single move.',
+    title: 'One Jump Per Move',
+    subtitle: 'The horse\'s gift has limits',
+    description: 'The knight shares its jumping power for one leap only. After clearing one blocker, the next piece on that line stops you dead.',
     board: [
       ['♕','','♟','','♜','',''],
       ['','','','','','',''],
     ],
     highlight: 'red',
-    caption: '♕ jumps ♟ but ♜ blocks further travel. Cannot land past ♜.',
+    caption: '♕ clears ♟ but ♜ holds the line — cannot pass.',
   },
   {
-    title: 'Pawns & Kings',
-    subtitle: 'Short-range jumps too',
-    description: 'Pawns near a knight can jump one square forward over a blocker. Kings can jump one square in any direction when blocked.',
+    title: 'Every Piece Gets Wings',
+    subtitle: 'Pawns & kings leap too',
+    description: 'Even pawns and kings can feel the horse\'s power. Pawns near a knight jump one square forward over a blocker. Kings can jump one square in any safe direction.',
     board: [
       ['','♟','',''],
       ['♙','','',''],
       ['♞','','',''],
     ],
     highlight: 'green',
-    caption: '♙ can jump over ♟ — powered by ♞ below',
+    caption: '♙ flies over ♟ — carried by ♞\'s aura',
   },
 ];
 
@@ -940,7 +940,7 @@ export default function App() {
       <header className="top-bar">
         <div className="brand">
           <img src="/riderchess.png" alt="Logo" className="brand-logo" />
-          <h1>KNightAuraChess</h1>
+          <h1>Knight-Aura Chess</h1>
         </div>
         <div className="auth-panel">
           {!authReady ? (
@@ -1421,9 +1421,9 @@ export default function App() {
       <footer className="footer">
         <div className="footer-brand">
           <span className="footer-brand-dot" />
-          KNightAuraChess
+          Knight-Aura Chess
         </div>
-        <span className="footer-meta">A chess variant with knight-empowered jumping</span>
+        <span className="footer-meta">Chess reimagined — unleash the power of the horse</span>
       </footer>
         </>
       )}
