@@ -172,13 +172,15 @@ export default function App() {
       setClockBlack(null);
       return;
     }
-    if (!gameData.timeControl || !gameData.lastMoveAt) return;
+    if (!gameData.timeControl) return;
+    // lastMoveAt may briefly be null on the first snapshot after toggleReady
+    const lastMoveMs = gameData.lastMoveAt?.toMillis?.() ?? Date.now();
 
     timeoutFiredRef.current = false;
     const turn = gameData.fen?.split(' ')?.[1] ?? 'w'; // whose clock is ticking
 
     const tick = () => {
-      const elapsed = Math.max(0, (Date.now() - gameData.lastMoveAt.toMillis()) / 1000);
+      const elapsed = Math.max(0, (Date.now() - lastMoveMs) / 1000);
       const wt = turn === 'w'
         ? Math.max(0, (gameData.whiteTimeLeft ?? gameData.timeControl) - elapsed)
         : (gameData.whiteTimeLeft ?? gameData.timeControl);
@@ -1375,6 +1377,23 @@ export default function App() {
                         <p className="muted">Game starts when both players are ready.</p>
                       </div>
                     )}
+                    {/* Live clocks in sidebar */}
+                    {gameData?.status === 'active' && clockWhite != null && (
+                      <div className="sidebar-clocks">
+                        <div className={`sidebar-clock-row${game.turn() === 'b' ? ' sidebar-clock-row--active' : ''}`}>
+                          <span className="sidebar-clock-label">⬛ Black</span>
+                          <span className={`sidebar-clock-val${clockBlack <= 10 ? ' sidebar-clock-val--low' : ''}`}>
+                            {formatClock(clockBlack)}
+                          </span>
+                        </div>
+                        <div className={`sidebar-clock-row${game.turn() === 'w' ? ' sidebar-clock-row--active' : ''}`}>
+                          <span className="sidebar-clock-label">⬜ White</span>
+                          <span className={`sidebar-clock-val${clockWhite <= 10 ? ' sidebar-clock-val--low' : ''}`}>
+                            {formatClock(clockWhite)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {gameData?.status === 'waiting' ? (
                       <button className="btn btn-ghost" onClick={cancelMatchmaking}>Cancel</button>
                     ) : ['completed', 'draw', 'abandoned'].includes(gameData?.status) ? (
@@ -1385,6 +1404,22 @@ export default function App() {
                   </>
                 ) : (
                   <>
+                    {user && (
+                      <div style={{ marginBottom: '10px' }}>
+                        <p className="play-section-label" style={{ marginBottom: '6px' }}>⏱ Time Control</p>
+                        <div className="time-control-grid">
+                          {TIME_CONTROLS.map((tc) => (
+                            <button
+                              key={tc.seconds}
+                              className={`time-control-btn${selectedTimeControl === tc.seconds ? ' active' : ''}`}
+                              onClick={() => setSelectedTimeControl(tc.seconds)}
+                            >
+                              {tc.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {user ? (
                       <button className="btn btn-primary" onClick={startMatchmaking} style={{ width: '100%', marginBottom: 8 }}>
                         Find Online Match

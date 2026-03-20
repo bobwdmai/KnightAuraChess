@@ -853,6 +853,51 @@ textarea.select {
   font-weight: 700;
 }
 
+/* Sidebar clocks */
+.sidebar-clocks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-clock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-base);
+}
+
+.sidebar-clock-row--active {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+
+.sidebar-clock-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sidebar-clock-val {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.04em;
+}
+
+.sidebar-clock-val--low {
+  color: var(--danger);
+  animation: clock-pulse 1s ease-in-out infinite;
+}
+
 /* Ready panel */
 .ready-panel {
   display: flex;
