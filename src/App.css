@@ -281,6 +281,18 @@
   box-shadow: 0 0 14px rgba(90, 144, 32, 0.4);
 }
 
+.player-bar__clock--low {
+  color: #fff !important;
+  background: var(--danger) !important;
+  box-shadow: 0 0 14px rgba(192, 48, 48, 0.5) !important;
+  animation: clock-pulse 1s ease-in-out infinite;
+}
+
+@keyframes clock-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
+}
+
 .player-chip {
   background: var(--accent-soft);
   border: 1px solid rgba(90,144,32,0.4);
@@ -801,6 +813,40 @@ textarea.select {
 }
 
 .difficulty-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-bright);
+  font-weight: 700;
+}
+
+/* Time control grid */
+.time-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin: 4px 0;
+}
+
+.time-control-btn {
+  padding: 7px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-dim);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-base);
+  font-family: var(--font-mono);
+}
+
+.time-control-btn:hover {
+  color: var(--text-bright);
+  background: var(--bg-panel-hover);
+}
+
+.time-control-btn.active {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--accent-bright);

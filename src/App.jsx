@@ -29,6 +29,16 @@ const GAMES_COLLECTION = 'games';
 const RULE_ID = 'chessrider';
 const AI_DIFFICULTY_LEVELS = ['easy', 'medium', 'hard', 'expert'];
 
+const TIME_CONTROLS = [
+  { label: '1 min',  seconds: 60 },
+  { label: '3 min',  seconds: 180 },
+  { label: '5 min',  seconds: 300 },
+  { label: '10 min', seconds: 600 },
+  { label: '15 min', seconds: 900 },
+  { label: '30 min', seconds: 1800 },
+];
+const DEFAULT_TIME_CONTROL = 600;
+
 const createNewGame = () => new KnightJumpChess();
 
 const formatTurn = (turn) => (turn === 'w' ? 'White' : 'Black');
@@ -37,6 +47,15 @@ const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
   const secs = (seconds % 60).toFixed(1);
   return `${mins}:${secs.padStart(4, '0')}`;
+};
+
+// mm:ss countdown display for online clocks
+const formatClock = (seconds) => {
+  if (seconds == null) return '--:--';
+  const s = Math.max(0, Math.ceil(seconds));
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
 };
 
 const LEARN_STEPS = [
@@ -118,6 +137,10 @@ export default function App() {
   const [incomingChallenge, setIncomingChallenge] = useState(null);
   const [moveTimestamps, setMoveTimestamps] = useState([{ white: 0, black: 0 }]);
   const [currentMoveStartTime, setCurrentMoveStartTime] = useState(Date.now());
+  const [selectedTimeControl, setSelectedTimeControl] = useState(DEFAULT_TIME_CONTROL);
+  const [clockWhite, setClockWhite] = useState(null);
+  const [clockBlack, setClockBlack] = useState(null);
+  const timeoutFiredRef = useRef(false);
   const lastAiFenRef = useRef(null);
   const aiRequestIdRef = useRef(0);
   const aiWorkerRef = useRef(null);
@@ -141,6 +164,41 @@ export default function App() {
     if (playerColor === 'b') setFlipped(true);
     else if (playerColor === 'w') setFlipped(false);
   }, [playerColor]);
+
+  // Online clock countdown
+  useEffect(() => {
+    if (!isOnline || !gameData || gameData.status !== 'active') {
+      setClockWhite(null);
+      setClockBlack(null);
+      return;
+    }
+    if (!gameData.timeControl || !gameData.lastMoveAt) return;
+
+    timeoutFiredRef.current = false;
+    const turn = gameData.fen?.split(' ')?.[1] ?? 'w'; // whose clock is ticking
+
+    const tick = () => {
+      const elapsed = Math.max(0, (Date.now() - gameData.lastMoveAt.toMillis()) / 1000);
+      const wt = turn === 'w'
+        ? Math.max(0, (gameData.whiteTimeLeft ?? gameData.timeControl) - elapsed)
+        : (gameData.whiteTimeLeft ?? gameData.timeControl);
+      const bt = turn === 'b'
+        ? Math.max(0, (gameData.blackTimeLeft ?? gameData.timeControl) - elapsed)
+        : (gameData.blackTimeLeft ?? gameData.timeControl);
+      setClockWhite(wt);
+      setClockBlack(bt);
+      // Only the player on the clock submits the timeout
+      if (!timeoutFiredRef.current && playerColor === turn) {
+        if (turn === 'w' && wt <= 0) { timeoutFiredRef.current = true; handleTimeout('w'); }
+        if (turn === 'b' && bt <= 0) { timeoutFiredRef.current = true; handleTimeout('b'); }
+      }
+    };
+
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameData?.status, gameData?.lastMoveAt, gameData?.whiteTimeLeft, gameData?.blackTimeLeft, gameData?.timeControl, isOnline, playerColor]);
 
   const opponentName = useMemo(() => {
     if (!gameData) return 'Opponent';
@@ -462,9 +520,25 @@ export default function App() {
           moveResult.san || moveObj.san || `${moveObj.from}-${moveObj.to}`
         ];
 
+        // Deduct elapsed time from the player who just moved
+        let newWhiteTimeLeft = data.whiteTimeLeft ?? null;
+        let newBlackTimeLeft = data.blackTimeLeft ?? null;
+        if (data.timeControl && data.lastMoveAt) {
+          const elapsed = Math.max(0, (Date.now() - data.lastMoveAt.toMillis()) / 1000);
+          if (currentPlayerColor === 'w') newWhiteTimeLeft = Math.max(0, (data.whiteTimeLeft ?? data.timeControl) - elapsed);
+          else newBlackTimeLeft = Math.max(0, (data.blackTimeLeft ?? data.timeControl) - elapsed);
+        }
+
         let nextStatus = 'active';
         let result = null;
         let winner = null;
+
+        // Timeout check
+        if (newWhiteTimeLeft !== null && newWhiteTimeLeft <= 0) {
+          nextStatus = 'completed'; winner = 'b'; result = 'Black wins on time';
+        } else if (newBlackTimeLeft !== null && newBlackTimeLeft <= 0) {
+          nextStatus = 'completed'; winner = 'w'; result = 'White wins on time';
+        }
 
         const currentFen = gameCopy.fen().split(' ')[0];
         const hasWhiteKing = currentFen.includes('K');
@@ -547,6 +621,9 @@ export default function App() {
           winner,
           whiteRatingAfter: nextStatus === 'active' ? null : whiteRatingAfter,
           blackRatingAfter: nextStatus === 'active' ? null : blackRatingAfter,
+          whiteTimeLeft: newWhiteTimeLeft,
+          blackTimeLeft: newBlackTimeLeft,
+          lastMoveAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
       });
@@ -616,6 +693,9 @@ export default function App() {
         blackRating: null,
         fen: newGame.fen(),
         moveHistory: [],
+        timeControl: selectedTimeControl,
+        whiteTimeLeft: selectedTimeControl,
+        blackTimeLeft: selectedTimeControl,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -645,6 +725,9 @@ export default function App() {
         blackRating: null,
         fen: newGame.fen(),
         moveHistory: [],
+        timeControl: selectedTimeControl,
+        whiteTimeLeft: selectedTimeControl,
+        blackTimeLeft: selectedTimeControl,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -705,6 +788,9 @@ export default function App() {
           ...update,
           status: bothReady ? 'active' : 'waiting',
           startedAt: bothReady ? serverTimestamp() : data.startedAt || null,
+          lastMoveAt: bothReady ? serverTimestamp() : data.lastMoveAt || null,
+          whiteTimeLeft: bothReady ? (data.timeControl ?? DEFAULT_TIME_CONTROL) : (data.whiteTimeLeft ?? null),
+          blackTimeLeft: bothReady ? (data.timeControl ?? DEFAULT_TIME_CONTROL) : (data.blackTimeLeft ?? null),
           updatedAt: serverTimestamp()
         });
       });
@@ -716,6 +802,51 @@ export default function App() {
   const calculateElo = (playerRating, opponentRating, score, kFactor = 32) => {
     const expected = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
     return Math.round(playerRating + kFactor * (score - expected));
+  };
+
+  const handleTimeout = async (losingColor) => {
+    if (!gameId || !db || !gameData) return;
+    const gameRef = doc(db, GAMES_COLLECTION, gameId);
+    try {
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(gameRef);
+        if (!snap.exists() || snap.data().status !== 'active') return;
+        const data = snap.data();
+        const winnerColor = losingColor === 'w' ? 'b' : 'w';
+        const whiteScore = winnerColor === 'w' ? 1 : 0;
+        const blackScore = 1 - whiteScore;
+        let whiteRatingAfter = data.whiteRating ?? 1200;
+        let blackRatingAfter = data.blackRating ?? 1200;
+        if (data.whiteId && data.blackId) {
+          whiteRatingAfter = calculateElo(data.whiteRating ?? 1200, data.blackRating ?? 1200, whiteScore);
+          blackRatingAfter = calculateElo(data.blackRating ?? 1200, data.whiteRating ?? 1200, blackScore);
+          tx.set(doc(db, 'users', data.whiteId), {
+            rating: whiteRatingAfter,
+            wins: increment(whiteScore === 1 ? 1 : 0),
+            losses: increment(whiteScore === 0 ? 1 : 0),
+            draws: increment(0),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          tx.set(doc(db, 'users', data.blackId), {
+            rating: blackRatingAfter,
+            wins: increment(blackScore === 1 ? 1 : 0),
+            losses: increment(blackScore === 0 ? 1 : 0),
+            draws: increment(0),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+        tx.update(gameRef, {
+          status: 'completed',
+          winner: winnerColor,
+          result: `${formatTurn(winnerColor)} wins on time`,
+          whiteRatingAfter,
+          blackRatingAfter,
+          updatedAt: serverTimestamp()
+        });
+      });
+    } catch (err) {
+      console.error('Timeout error:', err);
+    }
   };
 
   const handleChallengeFriend = async (friendUid, friendName) => {
@@ -736,6 +867,9 @@ export default function App() {
         blackRating: null,
         fen: newGame.fen(),
         moveHistory: [],
+        timeControl: selectedTimeControl,
+        whiteTimeLeft: selectedTimeControl,
+        blackTimeLeft: selectedTimeControl,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -1035,6 +1169,7 @@ export default function App() {
           {(() => {
             const topColor = flipped ? 'w' : 'b';
             const isActiveTurn = game.turn() === topColor && !isGameOver();
+            const topClock = topColor === 'w' ? clockWhite : clockBlack;
             return (
               <div className={`player-bar player-bar--top${isActiveTurn ? ' player-bar--active-turn' : ''}`}>
                 <div className="player-bar__info">
@@ -1046,6 +1181,11 @@ export default function App() {
                     </span>
                   )}
                 </div>
+                {isOnline && topClock != null && (
+                  <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}${topClock <= 10 ? ' player-bar__clock--low' : ''}`}>
+                    {formatClock(topClock)}
+                  </div>
+                )}
                 {aiEnabled && !isOnline && (
                   <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}`}>
                     {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'white' : 'black'] || 0)}
@@ -1072,6 +1212,7 @@ export default function App() {
           {(() => {
             const botColor = flipped ? 'b' : 'w';
             const isActiveTurn = game.turn() === botColor && !isGameOver();
+            const botClock = botColor === 'w' ? clockWhite : clockBlack;
             return (
               <div className={`player-bar player-bar--bottom${isActiveTurn ? ' player-bar--active-turn' : ''}`}>
                 <div className="player-bar__info">
@@ -1083,6 +1224,11 @@ export default function App() {
                     </span>
                   )}
                 </div>
+                {isOnline && botClock != null && (
+                  <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}${botClock <= 10 ? ' player-bar__clock--low' : ''}`}>
+                    {formatClock(botClock)}
+                  </div>
+                )}
                 {aiEnabled && !isOnline && (
                   <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}`}>
                     {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'black' : 'white'] || 0)}
@@ -1181,6 +1327,36 @@ export default function App() {
                     <p className="muted">Opponent: {opponentName}</p>
                     {gameData?.status === 'waiting' && playerColor && (
                       <div className="ready-panel">
+                        {/* Time control — host (white) can set before readying up */}
+                        {playerColor === 'w' && !readyStatus.self ? (
+                          <div style={{ marginBottom: '12px' }}>
+                            <p className="play-section-label" style={{ marginBottom: '6px' }}>Time Control</p>
+                            <div className="time-control-grid">
+                              {TIME_CONTROLS.map((tc) => (
+                                <button
+                                  key={tc.seconds}
+                                  className={`time-control-btn${selectedTimeControl === tc.seconds ? ' active' : ''}`}
+                                  onClick={async () => {
+                                    setSelectedTimeControl(tc.seconds);
+                                    if (gameId && db) {
+                                      await updateDoc(doc(db, GAMES_COLLECTION, gameId), {
+                                        timeControl: tc.seconds,
+                                        whiteTimeLeft: tc.seconds,
+                                        blackTimeLeft: tc.seconds
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {tc.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="muted" style={{ marginBottom: '8px' }}>
+                            ⏱ {formatClock(gameData?.timeControl ?? selectedTimeControl)} per player
+                          </p>
+                        )}
                         <div className="ready-row">
                           <span>You</span>
                           <span className={readyStatus.self ? 'ready-chip ready-chip--on' : 'ready-chip'}>
