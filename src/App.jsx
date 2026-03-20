@@ -943,9 +943,17 @@ export default function App() {
             <span className="auth-status">Local mode</span>
           ) : user ? (
             <div className="auth-user">
-              <span className="auth-name">{displayName}</span>
-              <span className="auth-meta">({rating})</span>
-              <button className="btn btn-ghost" onClick={signOut}>Sign out</button>
+              <div className="auth-user-chip" onClick={() => setProfileModalUid(user.uid)} role="button" tabIndex={0}>
+                <div className="auth-avatar-mini">
+                  {profile?.photoURL
+                    ? <img src={profile.photoURL} alt="" referrerPolicy="no-referrer" />
+                    : (displayName || '?')[0].toUpperCase()
+                  }
+                </div>
+                <span className="auth-name">{displayName}</span>
+                <span className="auth-meta">{rating}</span>
+              </div>
+              <button className="btn btn-ghost" style={{ fontSize: '0.8rem', padding: '5px 12px' }} onClick={signOut}>Sign out</button>
             </div>
           ) : (
             <div className="auth-actions">
@@ -962,29 +970,18 @@ export default function App() {
       ) : (
         <>
           <main className="layout">
-        {/* ── Left: Leaderboard ── */}
-        {firebaseEnabled && (
-          <LeaderboardPanel
-            currentUser={user}
-            onPlayerClick={(p) => setProfileModalUid(p.id)}
-          />
-        )}
 
         {/* ── Board Column ── */}
         <section className="board-section">
-          {/* Status text */}
+          {/* Status */}
           <div className="board-header">
-            <div>
-              <p className="muted" style={{ fontSize: '0.85rem' }}>
-                {isOnline ? 'Live Match' : aiEnabled ? 'vs AI' : 'Practice'}
-                {' · '}
-                {gameStatusText()}
-              </p>
+            <div className="game-mode-badge">
+              <span className={`game-mode-dot${isOnline ? ' game-mode-dot--live' : ''}`} />
+              {isOnline ? 'Live Match' : aiEnabled ? 'vs AI' : 'Practice'}
             </div>
+            <span className="game-status-text">{gameStatusText()}</span>
             {isOnline && playerColor && (
-              <div className="player-chip">
-                {formatTurn(playerColor)}
-              </div>
+              <div className="player-chip">{formatTurn(playerColor)}</div>
             )}
             {!isOnline && aiEnabled && (
               <div className="ai-opponent-badge">
@@ -1029,23 +1026,28 @@ export default function App() {
           )}
 
           {/* Top player bar */}
-          <div className="player-bar player-bar--top">
-            <div className="player-bar__info">
-              <span className="player-bar__name">{flipped ? bottomPlayerName : topPlayerName}</span>
-              {(flipped ? bottomPlayerRating : topPlayerRating) && (
-                <span className="player-bar__rating">
-                  ({flipped ? bottomPlayerRating : topPlayerRating})
-                </span>
-              )}
-            </div>
-            {aiEnabled && !isOnline && (
-              <div className="player-bar__clock">
-                <span className={game.turn() === (flipped ? 'w' : 'b') ? 'player-bar__clock--active' : ''}>
-                  {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'white' : 'black'] || 0)}
-                </span>
+          {(() => {
+            const topColor = flipped ? 'w' : 'b';
+            const isActiveTurn = game.turn() === topColor && !isGameOver();
+            return (
+              <div className={`player-bar player-bar--top${isActiveTurn ? ' player-bar--active-turn' : ''}`}>
+                <div className="player-bar__info">
+                  <span className={`player-bar__color-indicator player-bar__color-indicator--${topColor === 'w' ? 'white' : 'black'}`} />
+                  <span className="player-bar__name">{flipped ? bottomPlayerName : topPlayerName}</span>
+                  {(flipped ? bottomPlayerRating : topPlayerRating) && (
+                    <span className="player-bar__rating">
+                      {flipped ? bottomPlayerRating : topPlayerRating}
+                    </span>
+                  )}
+                </div>
+                {aiEnabled && !isOnline && (
+                  <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}`}>
+                    {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'white' : 'black'] || 0)}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
 
           {/* Board */}
           <ChessBoard
@@ -1061,23 +1063,28 @@ export default function App() {
           />
 
           {/* Bottom player bar */}
-          <div className="player-bar player-bar--bottom">
-            <div className="player-bar__info">
-              <span className="player-bar__name">{flipped ? topPlayerName : bottomPlayerName}</span>
-              {(flipped ? topPlayerRating : bottomPlayerRating) && (
-                <span className="player-bar__rating">
-                  ({flipped ? topPlayerRating : bottomPlayerRating})
-                </span>
-              )}
-            </div>
-            {aiEnabled && !isOnline && (
-              <div className="player-bar__clock">
-                <span className={game.turn() === (flipped ? 'b' : 'w') ? 'player-bar__clock--active' : ''}>
-                  {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'black' : 'white'] || 0)}
-                </span>
+          {(() => {
+            const botColor = flipped ? 'b' : 'w';
+            const isActiveTurn = game.turn() === botColor && !isGameOver();
+            return (
+              <div className={`player-bar player-bar--bottom${isActiveTurn ? ' player-bar--active-turn' : ''}`}>
+                <div className="player-bar__info">
+                  <span className={`player-bar__color-indicator player-bar__color-indicator--${botColor === 'w' ? 'white' : 'black'}`} />
+                  <span className="player-bar__name">{flipped ? topPlayerName : bottomPlayerName}</span>
+                  {(flipped ? topPlayerRating : bottomPlayerRating) && (
+                    <span className="player-bar__rating">
+                      {flipped ? topPlayerRating : bottomPlayerRating}
+                    </span>
+                  )}
+                </div>
+                {aiEnabled && !isOnline && (
+                  <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}`}>
+                    {formatTime(moveTimestamps[moveTimestamps.length - 1]?.[flipped ? 'black' : 'white'] || 0)}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
 
           {/* Board action buttons */}
           <div className="board-actions">
@@ -1127,11 +1134,12 @@ export default function App() {
         <div className="sidebar">
           <nav className="tab-navigation">
             {[
-              { key: 'play', icon: '▶', label: 'Play' },
-              { key: 'moves', icon: '☰', label: 'Moves' },
-              { key: 'games', icon: '⚔', label: 'Games' },
-              { key: 'settings', icon: '⚙', label: 'Settings' },
-              { key: 'social', icon: '👥', label: 'Social', badge: unreadDmCount },
+              { key: 'play',     icon: '▶',  label: 'Play' },
+              { key: 'moves',    icon: '☰',  label: 'Moves' },
+              { key: 'games',    icon: '⚔',  label: 'Games' },
+              { key: 'social',   icon: '👥', label: 'Social', badge: unreadDmCount },
+              { key: 'rankings', icon: '🏆', label: 'Top 100' },
+              { key: 'settings', icon: '⚙',  label: 'Settings' },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -1148,9 +1156,8 @@ export default function App() {
             <button
               className="tab-btn"
               onClick={() => setCurrentPage('learn')}
-              title="Learn the rules"
             >
-              <span className="tab-icon">📖</span>
+              <span className="tab-icon-wrap"><span className="tab-icon">📖</span></span>
               <span className="tab-label">Learn</span>
             </button>
           </nav>
@@ -1218,20 +1225,20 @@ export default function App() {
                       ⚙ Play vs AI
                     </button>
                     
-                    <div className="theme-select">
-                      <label htmlFor="ai-difficulty" className="muted">AI Difficulty</label>
-                      <select
-                        id="ai-difficulty"
-                        className="select"
-                        value={aiDifficulty}
-                        onChange={(event) => setAiDifficulty(event.target.value)}
-                        disabled={aiThinking}
-                      >
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                        <option value="expert">Expert</option>
-                      </select>
+                    <div style={{ marginBottom: '8px' }}>
+                      <p className="play-section-label" style={{ marginBottom: '6px' }}>AI Difficulty</p>
+                      <div className="difficulty-grid">
+                        {AI_DIFFICULTY_LEVELS.map((d) => (
+                          <button
+                            key={d}
+                            className={`difficulty-btn${aiDifficulty === d ? ' active' : ''}`}
+                            onClick={() => setAiDifficulty(d)}
+                            disabled={aiThinking}
+                          >
+                            {d.charAt(0).toUpperCase() + d.slice(1)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     
                     {aiEnabled && (
@@ -1331,40 +1338,60 @@ export default function App() {
             {activeTab === 'settings' && (
               <div className="tab-panel">
                 <h3>Settings</h3>
-                <div className="theme-select">
-                  <label htmlFor="theme-choice" className="muted">Board theme</label>
-                  <select
-                    id="theme-choice"
-                    className="select"
-                    value={theme}
-                    onChange={(event) => setTheme(event.target.value)}
-                  >
-                    <option value="classic">Brown (Classic)</option>
-                    <option value="slate">Blue-Gray (Slate)</option>
-                    <option value="rosewood">Rosewood</option>
-                  </select>
+
+                <div className="settings-section">
+                  <span className="settings-section-label">Board Theme</span>
+                  <div className="theme-swatches">
+                    {[
+                      { key: 'classic', label: 'Classic', l: 'swatch-classic-light', d: 'swatch-classic-dark' },
+                      { key: 'slate', label: 'Slate', l: 'swatch-slate-light', d: 'swatch-slate-dark' },
+                      { key: 'rosewood', label: 'Rosewood', l: 'swatch-rosewood-light', d: 'swatch-rosewood-dark' },
+                    ].map((t) => (
+                      <button key={t.key} className={`theme-swatch${theme === t.key ? ' active' : ''}`} onClick={() => setTheme(t.key)}>
+                        <div className="theme-swatch-preview">
+                          <span className={t.l} /><span className={t.d} />
+                          <span className={t.d} /><span className={t.l} />
+                        </div>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="theme-select">
-                  <label htmlFor="piece-choice" className="muted">Piece set</label>
-                  <select
-                    id="piece-choice"
-                    className="select"
-                    value={pieceStyle}
-                    onChange={(event) => setPieceStyle(event.target.value)}
-                  >
-                    <option value="svg">Cburnett (Classic)</option>
-                    <option value="minimal">Letters</option>
-                  </select>
+
+                <div className="settings-section">
+                  <span className="settings-section-label">Piece Set</span>
+                  <div className="piece-set-grid">
+                    <button className={`piece-set-btn${pieceStyle === 'svg' ? ' active' : ''}`} onClick={() => setPieceStyle('svg')}>
+                      <span className="piece-set-preview">♜</span>
+                      Cburnett
+                    </button>
+                    <button className={`piece-set-btn${pieceStyle === 'minimal' ? ' active' : ''}`} onClick={() => setPieceStyle('minimal')}>
+                      <span className="piece-set-preview" style={{ fontSize: '1.1rem', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>K</span>
+                      Letters
+                    </button>
+                  </div>
                 </div>
+
                 {user && (
                   <button
                     className="btn btn-ghost"
-                    style={{ marginTop: '1rem', width: '100%' }}
+                    style={{ width: '100%', marginTop: '4px' }}
                     onClick={() => setProfileModalUid(user.uid)}
                   >
                     Edit My Profile
                   </button>
                 )}
+              </div>
+            )}
+
+            {/* ── Rankings Tab ── */}
+            {activeTab === 'rankings' && firebaseEnabled && (
+              <div className="tab-panel">
+                <LeaderboardPanel
+                  currentUser={user}
+                  onPlayerClick={(p) => setProfileModalUid(p.id)}
+                  embedded
+                />
               </div>
             )}
 
@@ -1386,8 +1413,11 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <span>KNightAuraChess</span>
-        <span>A chess variant with knight-empowered jumping</span>
+        <div className="footer-brand">
+          <span className="footer-brand-dot" />
+          KNightAuraChess
+        </div>
+        <span className="footer-meta">A chess variant with knight-empowered jumping</span>
       </footer>
         </>
       )}

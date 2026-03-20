@@ -175,7 +175,8 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
 
         {!loading && profile && !editing && (
           <>
-            <div className="profile-header">
+            {/* Colored header band */}
+            <div className="profile-header-band">
               <Avatar photoURL={profile.photoURL} displayName={profile.displayName} size="lg" />
               <div className="profile-meta">
                 <h2 className="profile-name">{profile.displayName || 'Player'}</h2>
@@ -190,36 +191,40 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
                 </div>
               </div>
             </div>
-            {profile.introduction ? (
-              <p className="profile-intro">{profile.introduction}</p>
-            ) : isOwn ? (
-              <p className="muted profile-intro-empty">Add an introduction to tell others about yourself.</p>
-            ) : null}
-            <div className="profile-actions">
-              {isOwn && (
-                <button className="btn btn-ghost" onClick={() => {
-                  setEditName(profile.displayName || '');
-                  setEditIntro(profile.introduction || '');
-                  setEditPhoto(profile.photoURL || '');
-                  setEditing(true);
-                }}>
-                  Edit Profile
-                </button>
-              )}
-              {!isOwn && currentUser && (
-                <>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleAddFriend}
-                    disabled={friendStatus === 'accepted' || friendStatus === 'pending_sent'}
-                  >
-                    {friendButtonLabel()}
+
+            {/* Profile body */}
+            <div className="profile-body">
+              {profile.introduction ? (
+                <p className="profile-intro">{profile.introduction}</p>
+              ) : isOwn ? (
+                <p className="profile-intro-empty">Add an introduction to tell others about yourself.</p>
+              ) : null}
+              <div className="profile-actions">
+                {isOwn && (
+                  <button className="btn btn-ghost" onClick={() => {
+                    setEditName(profile.displayName || '');
+                    setEditIntro(profile.introduction || '');
+                    setEditPhoto(profile.photoURL || '');
+                    setEditing(true);
+                  }}>
+                    Edit Profile
                   </button>
-                  <button className="btn btn-ghost" onClick={handleMessage}>
-                    Message
-                  </button>
-                </>
-              )}
+                )}
+                {!isOwn && currentUser && (
+                  <>
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleAddFriend}
+                      disabled={friendStatus === 'accepted' || friendStatus === 'pending_sent'}
+                    >
+                      {friendButtonLabel()}
+                    </button>
+                    <button className="btn btn-ghost" onClick={handleMessage}>
+                      Message
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Game history */}
@@ -261,7 +266,7 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
         )}
 
         {!loading && profile && editing && (
-          <div className="profile-edit-form">
+          <div className="profile-edit-form" style={{ padding: '22px' }}>
             <h3 style={{ marginTop: 0 }}>Edit Profile</h3>
             <label className="edit-label">
               Display Name

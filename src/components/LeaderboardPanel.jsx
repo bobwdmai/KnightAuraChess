@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, onSnapshot, orderBy, query, limit as fsLimit } from 'firebase/firestore';
 import { db, firebaseEnabled } from '../utils/firebase.js';
 
-export default function LeaderboardPanel({ currentUser, onPlayerClick }) {
+export default function LeaderboardPanel({ currentUser, onPlayerClick, embedded }) {
   const [players, setPlayers] = useState([]);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function LeaderboardPanel({ currentUser, onPlayerClick }) {
   }, []);
 
   return (
-    <aside className="leaderboard-panel">
+    <aside className="leaderboard-panel" data-embedded={embedded ? 'true' : undefined}>
       <div className="leaderboard-header">
         <h3 className="leaderboard-title">Top 100</h3>
       </div>

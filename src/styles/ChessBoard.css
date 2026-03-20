@@ -49,12 +49,12 @@
 /* Board Container */
 .board-surface {
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   margin: 0 auto;
   box-sizing: border-box;
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 8px 48px rgba(0,0,0,0.7);
 }
 
 .board-grid {
@@ -181,14 +181,15 @@
   width: 85%;
   height: 85%;
   pointer-events: none;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
   position: relative;
   z-index: 3;
-  transition: transform 0.08s ease;
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 
 .square:hover .piece-image {
-  transform: scale(1.02);
+  transform: scale(1.05);
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.45));
 }
 
 .piece {
