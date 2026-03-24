@@ -152,7 +152,6 @@ export default function App() {
   const isBotOnlineGameRef = useRef(false);
   const botMovePendingRef = useRef(false);
   const [pendingBotMove, setPendingBotMove] = useState(null);
-  const [botJoinCountdown, setBotJoinCountdown] = useState(null);
   const rawAiDifficulty = (import.meta.env.VITE_AI_DIFFICULTY || 'medium').toLowerCase();
   const envAiDifficulty = AI_DIFFICULTY_LEVELS.includes(rawAiDifficulty)
     ? rawAiDifficulty
@@ -464,24 +463,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [isOnline, gameData?.status, gameData?.whiteId, gameData?.blackId, gameData?.createdAt, user?.uid, addBotOpponent]);
 
-  // ── Bot join countdown display ──
-  useEffect(() => {
-    if (!isOnline || !gameData || gameData.status !== 'waiting' ||
-        gameData.whiteId !== user?.uid || gameData.blackId !== null) {
-      setBotJoinCountdown(null);
-      return;
-    }
-    const createdMs = gameData.createdAt?.toMillis?.();
-    if (!createdMs) return;
-    const update = () => {
-      const remaining = Math.max(0, Math.ceil((60000 - (Date.now() - createdMs)) / 1000));
-      setBotJoinCountdown(remaining);
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [isOnline, gameData?.status, gameData?.whiteId, gameData?.blackId, gameData?.createdAt, user?.uid]);
-
   // ── Trigger AI move when it's the bot's turn in an online bot game ──
   useEffect(() => {
     if (!isOnline || !gameData || gameData.status !== 'active') return;
@@ -666,7 +647,7 @@ export default function App() {
         let whiteRatingAfter = data.whiteRating ?? 1200;
         let blackRatingAfter = data.blackRating ?? 1200;
 
-        if ((nextStatus === 'completed' || nextStatus === 'draw') && data.whiteId && data.blackId && data.blackId !== 'bot') {
+        if ((nextStatus === 'completed' || nextStatus === 'draw') && data.whiteId && data.blackId) {
           const whiteScore = winner === 'w' ? 1 : winner === 'b' ? 0 : 0.5;
           const blackScore = winner === 'b' ? 1 : winner === 'w' ? 0 : 0.5;
 
@@ -782,6 +763,19 @@ export default function App() {
           }
         }
 
+        let whiteRatingAfter = data.whiteRating ?? 1200;
+        if (nextStatus === 'completed' || nextStatus === 'draw') {
+          const whiteScore = winner === 'w' ? 1 : winner === 'b' ? 0 : 0.5;
+          whiteRatingAfter = calculateElo(data.whiteRating ?? 1200, data.blackRating ?? 1200, whiteScore);
+          tx.set(doc(db, 'users', data.whiteId), {
+            rating: whiteRatingAfter,
+            wins: increment(whiteScore === 1 ? 1 : 0),
+            losses: increment(whiteScore === 0 ? 1 : 0),
+            draws: increment(whiteScore === 0.5 ? 1 : 0),
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        }
+
         tx.update(gameRef, {
           fen: gameCopy.fen(),
           moveHistory: newHistory,
@@ -789,7 +783,7 @@ export default function App() {
           status: nextStatus,
           result,
           winner,
-          whiteRatingAfter: null,
+          whiteRatingAfter: nextStatus === 'active' ? null : whiteRatingAfter,
           blackRatingAfter: null,
           blackTimeLeft: newBlackTimeLeft,
           lastMoveAt: serverTimestamp(),
@@ -991,20 +985,13 @@ export default function App() {
         const blackScore = 1 - whiteScore;
         let whiteRatingAfter = data.whiteRating ?? 1200;
         let blackRatingAfter = data.blackRating ?? 1200;
-        if (data.whiteId && data.blackId && data.blackId !== 'bot') {
+        if (data.whiteId && data.blackId) {
           whiteRatingAfter = calculateElo(data.whiteRating ?? 1200, data.blackRating ?? 1200, whiteScore);
           blackRatingAfter = calculateElo(data.blackRating ?? 1200, data.whiteRating ?? 1200, blackScore);
           tx.set(doc(db, 'users', data.whiteId), {
             rating: whiteRatingAfter,
             wins: increment(whiteScore === 1 ? 1 : 0),
             losses: increment(whiteScore === 0 ? 1 : 0),
-            draws: increment(0),
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-          tx.set(doc(db, 'users', data.blackId), {
-            rating: blackRatingAfter,
-            wins: increment(blackScore === 1 ? 1 : 0),
-            losses: increment(blackScore === 0 ? 1 : 0),
             draws: increment(0),
             updatedAt: serverTimestamp()
           }, { merge: true });
@@ -1121,7 +1108,7 @@ export default function App() {
           let whiteRatingAfter = data.whiteRating ?? 1200;
           let blackRatingAfter = data.blackRating ?? 1200;
 
-          if (data.whiteId && data.blackId && data.blackId !== 'bot') {
+          if (data.whiteId && data.blackId) {
             const whiteScore = winnerColor === 'w' ? 1 : 0;
             const blackScore = winnerColor === 'b' ? 1 : 0;
 
@@ -1547,13 +1534,6 @@ export default function App() {
                           {readyStatus.self ? 'Unready' : 'Ready up'}
                         </button>
                         <p className="muted">Game starts when both players are ready.</p>
-                        {botJoinCountdown !== null && (
-                          <p className="muted" style={{ marginTop: '8px', fontSize: '0.85em' }}>
-                            {botJoinCountdown > 0
-                              ? `Finding opponent... ${botJoinCountdown}s`
-                              : 'Connecting opponent...'}
-                          </p>
-                        )}
                       </div>
                     )}
                     {/* Live clocks in sidebar */}
