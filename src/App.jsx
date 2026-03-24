@@ -29,6 +29,14 @@ const GAMES_COLLECTION = 'games';
 const RULE_ID = 'chessrider';
 const AI_DIFFICULTY_LEVELS = ['easy', 'medium', 'hard', 'expert'];
 
+const BOT_FIRST_NAMES = ['Alex','Jordan','Morgan','Casey','Riley','Taylor','Avery','Quinn','Sage','Drew','Blake','Reese','Skyler','Cameron','Dakota','Hayden','Parker','Emery','Finley','Rowan'];
+const BOT_LAST_NAMES = ['Kim','Chen','Park','Lee','Wang','Singh','Patel','Rivera','Cruz','Reyes','Brooks','Hayes','Wells','Grant','Webb','Bell','Shaw','Cole','Hunt','Ross'];
+const randomBotName = () => {
+  const first = BOT_FIRST_NAMES[Math.floor(Math.random() * BOT_FIRST_NAMES.length)];
+  const last = BOT_LAST_NAMES[Math.floor(Math.random() * BOT_LAST_NAMES.length)];
+  return `${first} ${last}`;
+};
+
 const TIME_CONTROLS = [
   { label: '1 min',  seconds: 60 },
   { label: '3 min',  seconds: 180 },
@@ -434,7 +442,7 @@ export default function App() {
         if (data.status !== 'waiting' || data.blackId !== null) return;
         tx.update(gameRef, {
           blackId: 'bot',
-          blackName: `Guest-${Math.random().toString(36).slice(2, 8)}`,
+          blackName: randomBotName(),
           blackRating: 1200,
           blackReady: true,
           whiteReady: true,
