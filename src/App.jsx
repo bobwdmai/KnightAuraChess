@@ -450,8 +450,9 @@ export default function App() {
   const addBotOpponent = useCallback(async () => {
     if (!gameId || !user || !db) return;
     try {
-      // Pick a random bot and ensure its profile exists
-      const bot = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
+      // Pick a bot seeded by gameId so each game gets a different one
+      const seed = gameId.split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+      const bot = BOT_POOL[Math.abs(seed) % BOT_POOL.length];
       const botRef = doc(db, 'users', bot.uid);
       const botSnap = await getDoc(botRef);
       let botRating = 1200;
