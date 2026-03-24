@@ -2,12 +2,25 @@
    KNightAuraChess — UI Redesign
    ============================================================ */
 
+/* ─── Left decorative background art ─── */
+.left-bg-art {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc((100vw - 1160px) / 2);
+  background: url('/riderchess.png') center / contain no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* ─── Top Navigation Bar ─── */
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 52px;
+  height: 60px;
   padding: 0 24px;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border-subtle);
@@ -19,15 +32,31 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .brand h1 {
-  font-size: 1.08rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--text-white);
   margin: 0;
   letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--accent-bright);
+  letter-spacing: 0.01em;
+  margin: 0;
+  line-height: 1;
 }
 
 .brand-logo {

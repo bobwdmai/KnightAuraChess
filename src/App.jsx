@@ -1235,7 +1235,10 @@ export default function App() {
       <header className="top-bar">
         <div className="brand">
           <img src="/riderchess.png" alt="Logo" className="brand-logo" />
-          <h1>Knight-Aura Chess</h1>
+          <div className="brand-text">
+            <h1>Knight-Aura Chess</h1>
+            <p className="brand-subtitle">Chess reimagined — unleash the power of the horse</p>
+          </div>
         </div>
         <div className="auth-panel">
           {!authReady ? (
@@ -1264,6 +1267,9 @@ export default function App() {
           )}
         </div>
       </header>
+
+      {/* ── Left decorative background ── */}
+      <div className="left-bg-art" aria-hidden="true" />
 
       {/* ── Main Layout ── */}
       {currentPage === 'learn' ? (
