@@ -5,9 +5,92 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isBotProfile(uid, data) {
+      return data.isBot == true &&
+        data.uid == uid &&
+        uid.matches('bot_.*');
+    }
+
+    function isValidHumanDisplayName(displayName) {
+      return displayName is string &&
+        displayName == displayName.trim() &&
+        displayName.size() > 0 &&
+        displayName.size() <= 40 &&
+        !displayName.matches('.*\\/.*');
+    }
+
+    function hasValidHumanUsernameFields(data, uid) {
+      return data.uid == uid &&
+        isValidHumanDisplayName(data.displayName) &&
+        data.usernameKey is string &&
+        data.usernameKey == data.displayName.lower();
+    }
+
+    function matchingUsernameClaimAfter(uid) {
+      return hasValidHumanUsernameFields(request.resource.data, uid) &&
+        existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameKey)) &&
+        getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameKey)).data.uid == uid &&
+        getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameKey)).data.displayName == request.resource.data.displayName;
+    }
+
+    function usernameFieldsChanged() {
+      return request.resource.data.displayName != resource.data.displayName ||
+        request.resource.data.usernameKey != resource.data.usernameKey;
+    }
+
+    function isMatchStatUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'rating',
+        'wins',
+        'losses',
+        'draws',
+        'updatedAt'
+      ]);
+    }
+
+    function isValidUsernameClaim(usernameKey, data) {
+      return data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.uid == request.auth.uid &&
+        isValidHumanDisplayName(data.displayName) &&
+        usernameKey == data.displayName.lower();
+    }
+
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn() && (
+        isBotProfile(uid, request.resource.data) ||
+        (isSelf(uid) && matchingUsernameClaimAfter(uid))
+      );
+      allow update: if isSignedIn() && (
+        isBotProfile(uid, request.resource.data) ||
+        (
+          isSelf(uid) &&
+          hasValidHumanUsernameFields(request.resource.data, uid) &&
+          (!usernameFieldsChanged() || matchingUsernameClaimAfter(uid))
+        ) ||
+        isMatchStatUpdate()
+      );
+    }
+
+    match /usernames/{usernameKey} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSignedIn() &&
+        !exists(/databases/$(database)/documents/usernames/$(usernameKey)) &&
+        isValidUsernameClaim(usernameKey, request.resource.data);
+      allow update: if isSignedIn() &&
+        resource.data.uid == request.auth.uid &&
+        isValidUsernameClaim(usernameKey, request.resource.data);
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
     match /games/{gameId} {

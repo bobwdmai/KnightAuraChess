@@ -1316,14 +1316,6 @@ export default function App() {
             <p className="brand-subtitle">Chess reimagined — unleash the power of the horse</p>
           </div>
         </div>
-        <button
-          className="btn btn-ghost theme-toggle"
-          onClick={() => setDarkMode(m => !m)}
-          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          style={{ fontSize: '1.1rem', padding: '5px 10px' }}
-        >
-          {darkMode ? '☀ Light' : '🌙 Dark'}
-        </button>
         <div className="auth-panel">
           {!authReady ? (
             <span className="auth-status">Connecting...</span>
@@ -1804,6 +1796,26 @@ export default function App() {
             {activeTab === 'settings' && (
               <div className="tab-panel">
                 <h3>Settings</h3>
+
+                <div className="settings-section">
+                  <span className="settings-section-label">Interface Mode</span>
+                  <div className="piece-set-grid">
+                    <button
+                      className={`piece-set-btn${!darkMode ? ' active' : ''}`}
+                      onClick={() => setDarkMode(false)}
+                    >
+                      <span className="piece-set-preview">☀</span>
+                      Light
+                    </button>
+                    <button
+                      className={`piece-set-btn${darkMode ? ' active' : ''}`}
+                      onClick={() => setDarkMode(true)}
+                    >
+                      <span className="piece-set-preview">🌙</span>
+                      Dark
+                    </button>
+                  </div>
+                </div>
 
                 <div className="settings-section">
                   <span className="settings-section-label">Board Theme</span>

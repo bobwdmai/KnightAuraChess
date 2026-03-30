@@ -8,11 +8,15 @@ import {
   limit,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
   where
 } from 'firebase/firestore';
 import { db, firebaseEnabled } from '../utils/firebase.js';
+import {
+  claimDisplayName,
+  INVALID_USERNAME_ERROR,
+  USERNAME_TAKEN_ERROR
+} from '../utils/usernames.js';
 
 function Avatar({ photoURL, displayName, size = 'md' }) {
   const initial = (displayName || '?')[0].toUpperCase();
@@ -38,6 +42,7 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
   const [editIntro, setEditIntro] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [friendStatus, setFriendStatus] = useState(null); // null | 'pending_sent' | 'pending_received' | 'accepted'
   const [friendReqId, setFriendReqId] = useState(null);
   const [gameHistory, setGameHistory] = useState([]);
@@ -111,22 +116,40 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
   }, [profileUid, currentUser, isOwn]);
 
   const handleSave = async () => {
-    if (!currentUser || !db) return;
+    if (!currentUser || !db || !profile) return;
     setSaving(true);
+    setSaveError('');
+    const nextDisplayName = editName.trim() || profile.displayName;
+    const nextIntroduction = editIntro.trim();
+    const nextPhotoURL = editPhoto.trim() || profile.photoURL || null;
     try {
-      await setDoc(doc(db, 'users', currentUser.uid), {
-        displayName: editName.trim() || profile.displayName,
-        introduction: editIntro.trim(),
-        photoURL: editPhoto.trim() || profile.photoURL || null,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      const { displayName, usernameKey } = await claimDisplayName({
+        db,
+        uid: currentUser.uid,
+        desiredDisplayName: nextDisplayName,
+        previousUsernameKey: profile.usernameKey || null,
+        profilePatch: {
+          introduction: nextIntroduction,
+          photoURL: nextPhotoURL
+        }
+      });
       setProfile(p => ({
         ...p,
-        displayName: editName.trim() || p.displayName,
-        introduction: editIntro.trim(),
-        photoURL: editPhoto.trim() || p.photoURL
+        displayName,
+        usernameKey,
+        introduction: nextIntroduction,
+        photoURL: nextPhotoURL
       }));
       setEditing(false);
+    } catch (error) {
+      if (error?.code === USERNAME_TAKEN_ERROR) {
+        setSaveError('That username is already taken.');
+      } else if (error?.code === INVALID_USERNAME_ERROR) {
+        setSaveError('Username cannot be empty or contain "/".');
+      } else {
+        console.warn('Profile save failed:', error?.message || error);
+        setSaveError('Unable to save your profile right now.');
+      }
     } finally {
       setSaving(false);
     }
@@ -205,6 +228,7 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
                     setEditName(profile.displayName || '');
                     setEditIntro(profile.introduction || '');
                     setEditPhoto(profile.photoURL || '');
+                    setSaveError('');
                     setEditing(true);
                   }}>
                     Edit Profile
@@ -273,11 +297,17 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
               <input
                 className="select"
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={(e) => {
+                  setEditName(e.target.value);
+                  if (saveError) setSaveError('');
+                }}
                 maxLength={40}
                 placeholder="Your name"
               />
             </label>
+            <p className="muted" style={{ margin: '-6px 0 0' }}>
+              Usernames are unique and ignore letter case.
+            </p>
             <label className="edit-label">
               Profile Picture URL
               <input
@@ -298,11 +328,15 @@ export default function UserProfileModal({ profileUid, currentUser, currentUserN
                 placeholder="Tell others about yourself..."
               />
             </label>
+            {saveError && <p className="error-text" style={{ margin: 0 }}>{saveError}</p>}
             <div className="profile-actions">
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
-              <button className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => {
+                setSaveError('');
+                setEditing(false);
+              }}>Cancel</button>
             </div>
           </div>
         )}

@@ -13,6 +13,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { auth, db, firebaseEnabled, googleProvider } from '../utils/firebase.js';
+import { ensureUniqueDisplayName, hasMatchingUsernameClaim } from '../utils/usernames.js';
 
 const AuthContext = createContext(null);
 
@@ -63,45 +64,47 @@ export function AuthProvider({ children }) {
 
       try {
         const profileRef = doc(db, 'users', user.uid);
-        const baseProfile = {
+        const desiredDisplayName = getDisplayName(user);
+        const snap = await getDoc(profileRef);
+        const existing = snap.exists() ? (snap.data() || {}) : null;
+        const profilePatch = {
           uid: user.uid,
-          displayName: getDisplayName(user),
           email: user.email || null,
           photoURL: user.photoURL || null,
           isAnonymous: user.isAnonymous,
           updatedAt: serverTimestamp()
         };
 
-        const snap = await getDoc(profileRef);
-        if (!snap.exists()) {
-          await setDoc(profileRef, {
-            ...baseProfile,
-            rating: 1200,
-            createdAt: serverTimestamp()
+        if (!existing || typeof existing.rating !== 'number') {
+          profilePatch.rating = 1200;
+        }
+        if (!existing?.createdAt) {
+          profilePatch.createdAt = serverTimestamp();
+        }
+
+        let hasValidUsernameClaim = false;
+        if (existing?.displayName && existing?.usernameKey) {
+          hasValidUsernameClaim = await hasMatchingUsernameClaim({
+            db,
+            uid: user.uid,
+            usernameKey: existing.usernameKey,
+            displayName: existing.displayName
+          });
+        }
+
+        if (!existing || !existing.displayName || !existing.usernameKey || !hasValidUsernameClaim) {
+          await ensureUniqueDisplayName({
+            db,
+            uid: user.uid,
+            desiredDisplayName: existing?.displayName || desiredDisplayName,
+            fallbackDisplayName: user.isAnonymous
+              ? desiredDisplayName
+              : (user.email || `Player-${user.uid.slice(0, 6)}`),
+            previousUsernameKey: existing?.usernameKey || null,
+            profilePatch
           });
         } else {
-          const existing = snap.data() || {};
-          const patch = {
-            uid: user.uid,
-            email: user.email || null,
-            photoURL: user.photoURL || null,
-            isAnonymous: user.isAnonymous,
-            updatedAt: serverTimestamp(),
-          };
-
-          // Preserve custom display name — only set it if Firestore doesn't have one yet.
-          if (!existing.displayName) {
-            patch.displayName = getDisplayName(user);
-          }
-          // Never reset rating for returning users.
-          if (typeof existing.rating !== 'number') {
-            patch.rating = 1200;
-          }
-          if (!existing.createdAt) {
-            patch.createdAt = serverTimestamp();
-          }
-
-          await setDoc(profileRef, patch, { merge: true });
+          await setDoc(profileRef, profilePatch, { merge: true });
         }
 
         // Mark user as online
