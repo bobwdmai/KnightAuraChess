@@ -13,7 +13,8 @@ import { Chess } from 'chess.js';
 
 class KnightJumpChess extends Chess {
   constructor(fen) {
-    super(fen);
+    super();
+    if (fen) this.load(fen, { skipValidation: true });
   }
 
   /**
@@ -50,7 +51,8 @@ class KnightJumpChess extends Chess {
     try {
       // Recreate the game from current FEN to ensure all internal state is correct
       const currentFen = this.fen();
-      const tempGame = new Chess(currentFen);
+      const tempGame = new Chess();
+      tempGame.load(currentFen, { skipValidation: true });
       
       // Copy over critical internal state from fresh instance
       this._hash = tempGame._hash;

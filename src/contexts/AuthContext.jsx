@@ -82,9 +82,17 @@ export function AuthProvider({ children }) {
         } else {
           const existing = snap.data() || {};
           const patch = {
-            ...baseProfile,
+            uid: user.uid,
+            email: user.email || null,
+            photoURL: user.photoURL || null,
+            isAnonymous: user.isAnonymous,
+            updatedAt: serverTimestamp(),
           };
 
+          // Preserve custom display name — only set it if Firestore doesn't have one yet.
+          if (!existing.displayName) {
+            patch.displayName = getDisplayName(user);
+          }
           // Never reset rating for returning users.
           if (typeof existing.rating !== 'number') {
             patch.rating = 1200;

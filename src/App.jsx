@@ -154,6 +154,7 @@ export default function App() {
   const [matchError, setMatchError] = useState('');
   const [movePending, setMovePending] = useState(false);
   const [theme, setTheme] = useState('classic');
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cr_dark') !== 'false');
   const [pieceStyle, setPieceStyle] = useState('svg');
   const [waitingGames, setWaitingGames] = useState([]);
   const [joinGameId, setJoinGameId] = useState('');
@@ -191,6 +192,12 @@ export default function App() {
     if (gameData.blackId === user.uid) return 'b';
     return null;
   }, [gameData, user]);
+
+  // Apply dark/light theme to document root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    localStorage.setItem('cr_dark', darkMode ? 'true' : 'false');
+  }, [darkMode]);
 
   // Auto-flip board when playing as black
   useEffect(() => {
@@ -1309,6 +1316,14 @@ export default function App() {
             <p className="brand-subtitle">Chess reimagined — unleash the power of the horse</p>
           </div>
         </div>
+        <button
+          className="btn btn-ghost theme-toggle"
+          onClick={() => setDarkMode(m => !m)}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{ fontSize: '1.1rem', padding: '5px 10px' }}
+        >
+          {darkMode ? '☀' : '🌙'}
+        </button>
         <div className="auth-panel">
           {!authReady ? (
             <span className="auth-status">Connecting...</span>

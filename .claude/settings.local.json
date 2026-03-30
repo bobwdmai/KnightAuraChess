@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npx firebase-tools:*)",
+      "Bash(grep -r \"projectId\\\\|project_id\\\\|PROJECT_ID\" .env*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(grep -E \"\\\\.\\(js|jsx\\)$\")",
+      "Bash(npx vite:*)",
+      "Bash(node -e \"const v = require\\(''./package.json''\\); console.log\\(JSON.stringify\\(v.scripts\\)\\)\")",
+      "Bash(node_modules/.bin/vite build:*)",
+      "Read(//usr/local/bin/**)",
+      "Read(//home/wmai/.nvm/versions/**)",
+      "Bash(/opt/LM-Studio/resources/app/.webpack/bin/node node_modules/.bin/vite build)",
+      "Bash(/opt/LM-Studio/resources/app/.webpack/bin/node node_modules/vite/bin/vite.js build)"
+    ]
+  }
+}
