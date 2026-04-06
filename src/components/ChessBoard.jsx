@@ -11,11 +11,28 @@ import bb from '../assets/chess/cburnett/Chess_bdt45.svg';
 import br from '../assets/chess/cburnett/Chess_rdt45.svg';
 import bq from '../assets/chess/cburnett/Chess_qdt45.svg';
 import bk from '../assets/chess/cburnett/Chess_kdt45.svg';
+import wp3d from '../assets/chess/blue/Chess_pbg45.svg';
+import wn3d from '../assets/chess/blue/Chess_nbg45.svg';
+import wb3d from '../assets/chess/blue/Chess_bbg45.svg';
+import wr3d from '../assets/chess/blue/Chess_rbg45.svg';
+import wq3d from '../assets/chess/blue/Chess_qbt45.svg';
+import wk3d from '../assets/chess/blue/Chess_kbt45.svg';
+import bp3d from '../assets/chess/blue/Chess_pbt45.svg';
+import bn3d from '../assets/chess/blue/Chess_nbt45.svg';
+import bb3d from '../assets/chess/blue/Chess_bbt45.svg';
+import br3d from '../assets/chess/blue/Chess_rbt45.svg';
+import bq3d from '../assets/chess/blue/Chess_qbt45.svg';
+import bk3d from '../assets/chess/blue/Chess_kbt45.svg';
 import '../styles/ChessBoard.css';
 
-const pieceSprites = {
+const classicPieceSprites = {
   w: { p: wp, n: wn, b: wb, r: wr, q: wq, k: wk },
   b: { p: bp, n: bn, b: bb, r: br, q: bq, k: bk }
+};
+
+const board3dPieceSprites = {
+  w: { p: wp3d, n: wn3d, b: wb3d, r: wr3d, q: wq3d, k: wk3d },
+  b: { p: bp3d, n: bn3d, b: bb3d, r: br3d, q: bq3d, k: bk3d }
 };
 
 const pieceLetters = {
@@ -100,6 +117,8 @@ export default function ChessBoard({
   const checkSquare = getCheckSquare();
 
   const themeClass = theme?.startsWith('custom:') ? 'theme-custom' : `theme-${theme || 'classic'}`;
+  const effectivePieceStyle = board3d ? 'svg' : pieceStyle;
+  const activePieceSprites = board3d ? board3dPieceSprites : classicPieceSprites;
 
   return (
     <div
@@ -132,7 +151,9 @@ export default function ChessBoard({
                   isLastFrom ? 'square--last-from' : '',
                   isLastTo ? 'square--last-to' : '',
                   isCheck ? 'square--check' : '',
-                  isAura && !isSelected && !isLegal ? 'square--aura' : ''
+                  isAura && !isSelected && !isLegal ? 'square--aura' : '',
+                  piece ? 'square--occupied' : '',
+                  isSelected ? 'square--holding' : ''
                 ]
                   .filter(Boolean)
                   .join(' ');
@@ -146,11 +167,11 @@ export default function ChessBoard({
                     aria-label={`Square ${square}`}
                   >
                     {piece && (
-                      <span className={`piece-shell${isAuraPiece ? ' piece-shell--aura' : ''}`}>
-                        {pieceStyle === 'svg' ? (
+                      <span className={`piece-shell${isAuraPiece ? ' piece-shell--aura' : ''}${board3d && isSelected ? ' piece-shell--holding' : ''}`}>
+                        {effectivePieceStyle === 'svg' ? (
                           <img
                             className="piece-image"
-                            src={pieceSprites[piece.color][piece.type]}
+                            src={activePieceSprites[piece.color][piece.type]}
                             alt=""
                             draggable="false"
                           />

@@ -1205,8 +1205,12 @@ textarea.select {
 .theme-swatch--add .theme-swatch-preview--add {
   display: grid;
   place-items: center;
+  padding: 0;
+  margin: 0 auto;
   font-size: 1.5rem;
   font-weight: 300;
+  line-height: 1;
+  text-align: center;
   color: var(--text-dim);
   background: var(--bg-panel);
   border: 2px dashed var(--border);

@@ -3,6 +3,8 @@
    ============================================ */
 
 .chessboard-wrapper {
+  --cursor-hand-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f8fbff'/%3E%3Cstop offset='52%25' stop-color='%23c2ccd8'/%3E%3Cstop offset='100%25' stop-color='%237e8794'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M12 31c-2.8 0-5-2.2-5-5v-8.4c0-1.2 1-2.2 2.2-2.2 1.2 0 2.2 1 2.2 2.2V9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V16h1V7.8c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V16h1V9.1c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5V17h1v-5.1c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v9.6c0 5.2-4.2 9.5-9.5 9.5H12Z' fill='url(%23g)' stroke='%2357616e' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M11.4 18.2h15.3' stroke='%23ffffff' stroke-opacity='.36' stroke-width='1.2'/%3E%3Cpath d='M10.3 29c1.3.9 2.5 1.4 4.2 1.4h11.7c4.1 0 7.4-3.3 7.4-7.4' stroke='%23555f6b' stroke-opacity='.5' stroke-width='1' fill='none'/%3E%3C/svg%3E") 11 6, pointer;
+  --cursor-hand-grab: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23fefefe'/%3E%3Cstop offset='55%25' stop-color='%23c3ccd7'/%3E%3Cstop offset='100%25' stop-color='%2378828d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M13.4 31c-4.1 0-7.4-3.2-7.4-7.3v-4.8c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v1.2h1v-9.4c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v7.6h1v-9.2c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v9.2h1V11c0-1.4 1.1-2.5 2.5-2.5S31 9.6 31 11v8.3h1v-4.4c0-1.3 1-2.3 2.3-2.3s2.3 1 2.3 2.3v5.8c0 5.7-4.6 10.3-10.3 10.3H13.4Z' fill='url(%23g)' stroke='%2357616e' stroke-width='1.2' stroke-linejoin='round'/%3E%3Cpath d='M11.5 28.8c1.7 1 3 1.4 5 1.4h9.8c4.8 0 8.8-3.9 8.8-8.8' stroke='%23555f6b' stroke-opacity='.48' stroke-width='1' fill='none'/%3E%3C/svg%3E") 11 6, grabbing;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -345,6 +347,44 @@
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.chessboard-wrapper.board--3d .square {
+  cursor: var(--cursor-hand-open);
+}
+
+.chessboard-wrapper.board--3d .square--holding,
+.chessboard-wrapper.board--3d .square--legal,
+.chessboard-wrapper.board--3d .square--capture {
+  cursor: var(--cursor-hand-grab);
+}
+
+.chessboard-wrapper.board--3d .piece-shell {
+  transform-style: preserve-3d;
+}
+
+.chessboard-wrapper.board--3d .piece-image {
+  width: 90%;
+  height: 90%;
+  filter: drop-shadow(0 4px 3px rgba(255,255,255,0.18)) drop-shadow(0 8px 14px rgba(0,0,0,0.5));
+}
+
+.chessboard-wrapper.board--3d .square--occupied .piece-image {
+  transform: translateZ(12px);
+}
+
+.chessboard-wrapper.board--3d .piece-shell--holding::after {
+  content: '';
+  position: absolute;
+  top: 4%;
+  right: 5%;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23f4f7fb'/%3E%3Cstop offset='58%25' stop-color='%23b8c2ce'/%3E%3Cstop offset='100%25' stop-color='%2369717e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='rgba(8,10,14,.3)'/%3E%3Cpath d='M19 56c-6.4 0-11.5-5-11.5-11.4V31.5c0-2.6 2.1-4.7 4.7-4.7s4.7 2.1 4.7 4.7V19.7c0-2.8 2.3-5.1 5.1-5.1s5.1 2.3 5.1 5.1V30h2V16.4c0-2.8 2.3-5.1 5.1-5.1s5.1 2.3 5.1 5.1V30h2V18.8c0-2.8 2.3-5.1 5.1-5.1s5.1 2.3 5.1 5.1V32h2v-8.3c0-2.6 2.1-4.7 4.7-4.7s4.7 2.1 4.7 4.7v15.6C63.5 48.7 56.2 56 47.2 56H19Z' fill='url(%23bg)' stroke='%23545d68' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M17 50.5c2.8 1.8 5 2.5 8.4 2.5h21.8c7.4 0 13.4-6 13.4-13.4' fill='none' stroke='%23ffffff' stroke-opacity='.3' stroke-width='2'/%3E%3C/svg%3E");
+  background-size: cover;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  z-index: 5;
+}
+
 /* Piece drop-in animation on last-moved square */
 .chessboard-wrapper.board--3d .square--last-to .piece-image {
   animation: piece-land-3d 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -362,8 +402,14 @@
 
 /* Hover lift in 3D mode */
 .chessboard-wrapper.board--3d .square:hover .piece-image {
-  transform: scale(1.1) translateY(-5px);
-  filter: drop-shadow(0 10px 14px rgba(0,0,0,0.65));
+  transform: translateY(-5px) translateZ(18px) scale(1.1);
+  filter: drop-shadow(0 4px 3px rgba(255,255,255,0.2)) drop-shadow(0 10px 14px rgba(0,0,0,0.65));
+}
+
+.chessboard-wrapper.board--3d .square--holding .piece-image,
+.chessboard-wrapper.board--3d .square--holding:hover .piece-image {
+  transform: translateY(-7px) translateZ(24px) scale(1.12);
+  filter: drop-shadow(0 6px 6px rgba(255,255,255,0.24)) drop-shadow(0 12px 18px rgba(0,0,0,0.72));
 }
 
 /* ─── Responsive ─── */
