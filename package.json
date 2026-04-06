@@ -4,6 +4,9 @@
   "description": "Chess variant where pieces near knights can jump over blockers",
   "type": "module",
   "main": "src/KnightJumpChess.js",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "test": "node --test src/engine.test.mjs",
     "dev": "vite",
@@ -18,15 +21,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "chess.js": "^1.0.0-beta.8",
+    "chess.js": "^1.4.0",
     "firebase": "^10.14.1",
     "react": "^19.2.4",
-    "react-chessboard": "^5.8.6",
+    "react-chessboard": "^5.10.0",
     "react-dom": "^19.2.4",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.2",
-    "vite": "^5.0.0"
+    "@vitejs/plugin-react": "^5.1.4",
+    "vite": "^5.4.21"
   }
 }

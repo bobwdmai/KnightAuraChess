@@ -545,11 +545,8 @@ class KnightJumpChess extends Chess {
     }
 
     if (!matchingMove) {
-      console.log('No matching jump move found. Available jumps:', jumpMoves.map(m => `${m.from}-${m.to}`));
       return null; // Invalid jump move
     }
-
-    console.log('Found matching jump move:', matchingMove);
 
     // Execute the move using chess.js's internal methods
     // Remove the piece from source square
@@ -561,7 +558,6 @@ class KnightJumpChess extends Chess {
     // Remove destination piece if capturing
     const capturedPiece = this.get(matchingMove.to);
     if (capturedPiece) {
-      console.log('Removing captured piece at:', matchingMove.to);
       this.remove(matchingMove.to);
     }
     
