@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 const getSeason = (date = new Date()) => {
   const month = date.getMonth();
@@ -15,14 +15,12 @@ const DECORATION_MAP = {
   autumn: { icon: '❋', count: 14, label: 'Autumn' },
 };
 
-export default function SeasonDecorations() {
+export default function SeasonDecorations({ density = 100 }) {
   const season = getSeason();
   const config = DECORATION_MAP[season];
-  const [cursorEnabled, setCursorEnabled] = useState(false);
-  const [cursorVisible, setCursorVisible] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: -100, y: -100 });
+  const itemCount = Math.max(4, Math.round((config.count * density) / 100));
   const items = useMemo(
-    () => Array.from({ length: config.count }, (_, index) => ({
+    () => Array.from({ length: itemCount }, (_, index) => ({
       id: `${season}-${index}`,
       left: `${(index * 97) % 100}%`,
       delay: `${(index % 7) * 0.8}s`,
@@ -30,75 +28,11 @@ export default function SeasonDecorations() {
       scale: 0.7 + (index % 4) * 0.14,
       drift: `${((index % 5) - 2) * 22}px`,
     })),
-    [config.count, season]
+    [itemCount, season]
   );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const pointerQuery = window.matchMedia('(pointer: fine)');
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const syncCursorCapability = () => {
-      setCursorEnabled(pointerQuery.matches && !motionQuery.matches);
-    };
-
-    syncCursorCapability();
-    pointerQuery.addEventListener?.('change', syncCursorCapability);
-    motionQuery.addEventListener?.('change', syncCursorCapability);
-
-    return () => {
-      pointerQuery.removeEventListener?.('change', syncCursorCapability);
-      motionQuery.removeEventListener?.('change', syncCursorCapability);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return undefined;
-
-    document.body.classList.toggle('season-cursor-active', cursorEnabled);
-    return () => {
-      document.body.classList.remove('season-cursor-active');
-    };
-  }, [cursorEnabled]);
-
-  useEffect(() => {
-    if (!cursorEnabled || typeof window === 'undefined') return undefined;
-
-    const handlePointerMove = (event) => {
-      setCursorVisible(true);
-      setCursorPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-    };
-
-    const handlePointerLeave = () => {
-      setCursorVisible(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerleave', handlePointerLeave);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerleave', handlePointerLeave);
-    };
-  }, [cursorEnabled]);
 
   return (
     <div className={`season-decor season-decor--${season}`} aria-hidden="true" data-season={config.label}>
-      {cursorEnabled && (
-        <span
-          className={`season-decor__cursor${cursorVisible ? ' season-decor__cursor--visible' : ''}`}
-          style={{
-            left: `${cursorPosition.x}px`,
-            top: `${cursorPosition.y}px`,
-          }}
-        >
-          {config.icon}
-        </span>
-      )}
       {items.map((item) => (
         <span
           key={item.id}

@@ -184,6 +184,11 @@ export default function App() {
   const [pieceStyle, setPieceStyle] = useState('svg');
   const [liveVoiceChat, setLiveVoiceChat] = useState(() => localStorage.getItem('cr_live_voice_chat') === 'true');
   const [seasonalDecorations, setSeasonalDecorations] = useState(() => localStorage.getItem('cr_seasonal_decorations') !== 'false');
+  const [seasonalDecorationDensity, setSeasonalDecorationDensity] = useState(() => {
+    const raw = Number.parseInt(localStorage.getItem('cr_seasonal_decoration_density') || '100', 10);
+    if (Number.isNaN(raw)) return 100;
+    return Math.min(180, Math.max(20, raw));
+  });
   const [waitingGames, setWaitingGames] = useState([]);
   const [joinGameId, setJoinGameId] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -310,6 +315,9 @@ export default function App() {
   }, [boardCornerRadius]);
   useEffect(() => { localStorage.setItem('cr_live_voice_chat', liveVoiceChat ? 'true' : 'false'); }, [liveVoiceChat]);
   useEffect(() => { localStorage.setItem('cr_seasonal_decorations', seasonalDecorations ? 'true' : 'false'); }, [seasonalDecorations]);
+  useEffect(() => {
+    localStorage.setItem('cr_seasonal_decoration_density', String(seasonalDecorationDensity));
+  }, [seasonalDecorationDensity]);
 
   const customThemeVars = useMemo(() => {
     if (!theme.startsWith('custom:')) return null;
@@ -1689,6 +1697,8 @@ export default function App() {
       setLiveVoiceChat,
       seasonalDecorations,
       setSeasonalDecorations,
+      seasonalDecorationDensity,
+      setSeasonalDecorationDensity,
       user,
       onEditProfile: () => setProfileModalUid(user.uid),
     },
@@ -1720,7 +1730,7 @@ export default function App() {
         onSignOut={signOut}
       />
       <div className="left-bg-art" aria-hidden="true" />
-      {seasonalDecorations && <SeasonDecorations />}
+      {seasonalDecorations && <SeasonDecorations density={seasonalDecorationDensity} />}
       <AppPageRouter
         currentPage={currentPage}
         onNavigate={navigateToPage}
