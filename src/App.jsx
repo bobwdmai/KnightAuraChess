@@ -56,6 +56,8 @@ const BOT_POOL = [
   { uid: 'bot_rowan_reyes',   name: 'Rowan Reyes' },
 ];
 
+const APP_BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '') || '';
+
 const TIME_CONTROLS = [
   { label: '1 min',  seconds: 60 },
   { label: '3 min',  seconds: 180 },
@@ -100,56 +102,19 @@ const formatClock = (seconds) => {
   return `${mins}:${String(secs).padStart(2, '0')}`;
 };
 
-const LEARN_STEPS = [
-  {
-    title: 'The Knight\'s Aura',
-    subtitle: 'Unleash the horse\'s power',
-    description: 'In conventional chess, only the knight can jump. In Knight-Aura Chess, that power radiates outward — any friendly piece inside the knight\'s aura inherits the ability to jump.',
-    board: [
-      ['','','','','',''],
-      ['','','♞','','',''],
-      ['','✦','','✦','',''],
-      ['✦','','','','✦',''],
-      ['','','','','',''],
-    ],
-    highlight: 'green',
-    caption: '✦ = squares empowered by the knight\'s aura',
-  },
-  {
-    title: 'Ride the Aura — Jump!',
-    subtitle: 'Leap over a single blocker',
-    description: 'A piece riding the knight\'s aura can jump over exactly one blocking piece along its normal move path, then keep sliding — or land for a capture.',
-    board: [
-      ['♖','','♟','','','♝'],
-      ['','','','','',''],
-    ],
-    highlight: 'blue',
-    caption: '♖ leaps over ♟ — lands anywhere beyond, or captures ♝',
-  },
-  {
-    title: 'One Jump Per Move',
-    subtitle: 'The horse\'s gift has limits',
-    description: 'The knight shares its jumping power for one leap only. After clearing one blocker, the next piece on that line stops you dead.',
-    board: [
-      ['♕','','♟','','♜','',''],
-      ['','','','','','',''],
-    ],
-    highlight: 'red',
-    caption: '♕ clears ♟ but ♜ holds the line — cannot pass.',
-  },
-  {
-    title: 'Every Piece Gets Wings',
-    subtitle: 'Pawns & kings leap too',
-    description: 'Even pawns and kings can feel the horse\'s power. Pawns near a knight jump one square forward over a blocker. Kings can jump one square in any safe direction.',
-    board: [
-      ['','♟','',''],
-      ['♙','','',''],
-      ['♞','','',''],
-    ],
-    highlight: 'green',
-    caption: '♙ flies over ♟ — carried by ♞\'s aura',
-  },
-];
+const getPageFromLocation = () => {
+  if (typeof window === 'undefined') return 'game';
+  return /\/Tutorials\/?$/.test(window.location.pathname) ? 'learn' : 'game';
+};
+
+const setBrowserPage = (page, replace = false) => {
+  if (typeof window === 'undefined') return;
+  const nextUrl = page === 'learn'
+    ? `${APP_BASE_PATH}/Tutorials`
+    : (APP_BASE_PATH ? `${APP_BASE_PATH}/` : '/');
+  const method = replace ? 'replaceState' : 'pushState';
+  window.history[method](null, '', nextUrl);
+};
 
 export default function App() {
   const {
@@ -164,7 +129,7 @@ export default function App() {
     signInAnonymously,
     signOut
   } = useAuth();
-  const [currentPage, setCurrentPage] = useState('game');
+  const [currentPage, setCurrentPage] = useState(() => getPageFromLocation());
   const [game, setGame] = useState(() => createNewGame());
   const [moveHistory, setMoveHistory] = useState([]);
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -227,6 +192,20 @@ export default function App() {
   const [aiDifficulty, setAiDifficulty] = useState(envAiDifficulty);
 
   const isOnline = Boolean(gameId);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPage(getPageFromLocation());
+    };
+    window.addEventListener('popstate', handlePopState);
+    setCurrentPage(getPageFromLocation());
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateToPage = useCallback((page, replace = false) => {
+    setCurrentPage(page);
+    setBrowserPage(page, replace);
+  }, []);
 
   useEffect(() => {
     gameRef.current = game;
@@ -1569,7 +1548,7 @@ export default function App() {
 
       {/* ── Main Layout ── */}
       {currentPage === 'learn' ? (
-        <LearnPage onBack={() => setCurrentPage('game')} />
+        <LearnPage onBack={() => navigateToPage('game')} />
       ) : (
         <>
           <main className="layout">
@@ -1778,8 +1757,8 @@ export default function App() {
               </button>
             ))}
             <button
-              className="tab-btn"
-              onClick={() => setCurrentPage('learn')}
+              className={`tab-btn ${currentPage === 'learn' ? 'active' : ''}`}
+              onClick={() => navigateToPage('learn')}
             >
               <span className="tab-icon-wrap"><span className="tab-icon">📖</span></span>
               <span className="tab-label">Learn</span>
