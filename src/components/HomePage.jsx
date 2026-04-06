@@ -64,7 +64,7 @@ export default function HomePage({
       <section className="home-highlights">
         <article className="home-highlight">
           <h3>Play Guest</h3>
-          <p>Launch straight into a local board with clocks, AI support, and 3D mode.</p>
+          <p>Launch straight into a local board with clocks, AI support, and polished board-view options.</p>
         </article>
         <article className="home-highlight">
           <h3>Sign In</h3>

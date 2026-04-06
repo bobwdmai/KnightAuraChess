@@ -31,6 +31,7 @@ export default function ChessBoard({
   onSquareClick,
   theme,
   customThemeVars,
+  boardCornerRadius,
   pieceStyle,
   lastMove,
   flipped,
@@ -125,8 +126,6 @@ export default function ChessBoard({
 
   const moveFromCenter = getSquareCenter(moveAnimation?.from);
   const moveToCenter = getSquareCenter(moveAnimation?.to);
-  const selectedHandCenter = board3d && selectedSquare && !moveAnimation ? getSquareCenter(selectedSquare) : null;
-  const selectedPiece = board3d && selectedSquare && !moveAnimation ? game.get(selectedSquare) : null;
   const { moveOverlayActive, movePlaced, currentMoveCenter } = useBoardHandAnimation({
     enabled: board3d,
     moveAnimation,
@@ -156,7 +155,12 @@ export default function ChessBoard({
   return (
     <div
       className={`chessboard-wrapper ${themeClass}${board3d ? ' board--3d' : ''}${boardView === 'realistic' ? ' board--realistic' : ''}`}
-      style={theme?.startsWith('custom:') ? customThemeVars : undefined}
+      style={{
+        ...(theme?.startsWith('custom:') ? customThemeVars : {}),
+        '--board-corner-radius': `${boardCornerRadius}px`,
+        '--board-corner-radius-large': `${Math.max(boardCornerRadius + 2, boardCornerRadius)}px`,
+        '--board-corner-radius-base': `${Math.max(boardCornerRadius * 2.2, 12)}px`,
+      }}
     >
       {game ? (
         <div className="board-surface">
@@ -230,15 +234,6 @@ export default function ChessBoard({
               })
             )}
           </div>
-          {board3d && selectedHandCenter && selectedPiece && (
-            <div
-              className="board-hand-overlay board-hand-overlay--selected"
-              style={{ '--hand-x': selectedHandCenter.x, '--hand-y': selectedHandCenter.y }}
-            >
-              <div className="board-hand board-hand--idle" />
-              {renderPieceVisual(selectedPiece, 'board-hand-piece board-hand-piece--idle')}
-            </div>
-          )}
           {board3d && moveAnimation && moveFromCenter && moveToCenter && (
             <div
               key={moveAnimation.key}
@@ -257,8 +252,7 @@ export default function ChessBoard({
               }}
             >
               <div className="board-hand-carry">
-                <div className="board-hand board-hand--move" />
-                {renderPieceVisual(moveAnimation.movingPiece, 'board-hand-piece board-hand-piece--move')}
+                {renderPieceVisual(moveAnimation.movingPiece, 'board-move-piece board-move-piece--move')}
                 {moveAnimation.capturedPiece && (
                   renderPieceVisual(
                     moveAnimation.capturedPiece,

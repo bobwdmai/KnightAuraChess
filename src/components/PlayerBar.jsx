@@ -10,7 +10,7 @@ export default function PlayerBar({ position, color, isActiveTurn, name, rating,
       </div>
       {clock != null && (
         <div className={`player-bar__clock${isActiveTurn ? ' player-bar__clock--active' : ''}${clock <= 10 ? ' player-bar__clock--low' : ''}`}>
-          {formatClock(clock)}
+          <span className="player-bar__clock-value">{formatClock(clock)}</span>
         </div>
       )}
     </div>

@@ -295,21 +295,39 @@ export default function GameSidebar({
                 >
                   <span className="piece-set-preview">⬛</span>
                   Flat
+                  <span className="piece-set-note">Clean board, crisp 2D</span>
                 </button>
                 <button
-                  className={`piece-set-btn${settingsProps.boardView === '3d' ? ' active' : ''}`}
-                  onClick={() => settingsProps.setBoardView('3d')}
-                >
-                  <span className="piece-set-preview">🎲</span>
-                  3D
-                </button>
-                <button
-                  className={`piece-set-btn piece-set-btn--wide${settingsProps.boardView === 'realistic' ? ' active' : ''}`}
+                  className={`piece-set-btn${settingsProps.boardView === 'realistic' ? ' active' : ''}`}
                   onClick={() => settingsProps.setBoardView('realistic')}
                 >
                   <span className="piece-set-preview">♞</span>
                   Realistic
+                  <span className="piece-set-note">Wood board, steeper depth</span>
                 </button>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <div className="settings-section-heading">
+                <span className="settings-section-label">Corner Rounding</span>
+                <span className="settings-section-rail" aria-hidden="true" />
+              </div>
+              <div className="settings-slider">
+                <input
+                  className="settings-slider__input"
+                  type="range"
+                  min="0"
+                  max="24"
+                  step="1"
+                  value={settingsProps.boardCornerRadius}
+                  onChange={(event) => settingsProps.setBoardCornerRadius(Number.parseInt(event.target.value, 10))}
+                />
+                <div className="settings-slider__meta">
+                  <span>Sharp</span>
+                  <strong>{settingsProps.boardCornerRadius}px</strong>
+                  <span>Round</span>
+                </div>
               </div>
             </div>
 
@@ -332,6 +350,30 @@ export default function GameSidebar({
                 >
                   <span className="piece-set-preview">🎤</span>
                   Peer Voice
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <div className="settings-section-heading">
+                <span className="settings-section-label">Seasonal Decorations</span>
+                <span className="settings-section-rail" aria-hidden="true" />
+              </div>
+              <div className="piece-set-grid">
+                <button
+                  className={`piece-set-btn${!settingsProps.seasonalDecorations ? ' active' : ''}`}
+                  onClick={() => settingsProps.setSeasonalDecorations(false)}
+                >
+                  <span className="piece-set-preview">○</span>
+                  Off
+                </button>
+                <button
+                  className={`piece-set-btn${settingsProps.seasonalDecorations ? ' active' : ''}`}
+                  onClick={() => settingsProps.setSeasonalDecorations(true)}
+                >
+                  <span className="piece-set-preview">✦</span>
+                  On
+                  <span className="piece-set-note">Auto changes by season</span>
                 </button>
               </div>
             </div>

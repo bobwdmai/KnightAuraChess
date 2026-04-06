@@ -20,6 +20,7 @@ import {
 import KnightJumpChess from './KnightJumpChess.js';
 import AppHeader from './components/AppHeader.jsx';
 import AppPageRouter from './components/AppPageRouter.jsx';
+import SeasonDecorations from './components/SeasonDecorations.jsx';
 import { themeToVars } from './components/ThemeCreator.jsx';
 import { useAuth } from './contexts/AuthContext.jsx';
 import {
@@ -68,7 +69,7 @@ const TIME_CONTROLS = [
   { label: '30 min', seconds: 1800 },
 ];
 const DEFAULT_TIME_CONTROL = 300;
-const BOARD_VIEW_MODES = ['flat', '3d', 'realistic'];
+const BOARD_VIEW_MODES = ['flat', 'realistic'];
 const BASE_THEMES = [
   { key: 'classic', label: 'Classic', l: 'swatch-classic-light', d: 'swatch-classic-dark' },
   { key: 'slate', label: 'Slate', l: 'swatch-slate-light', d: 'swatch-slate-dark' },
@@ -79,8 +80,17 @@ const createNewGame = () => new KnightJumpChess();
 
 const getInitialBoardView = () => {
   const savedBoardView = localStorage.getItem('cr_board_view');
+  if (savedBoardView === '3d') return 'realistic';
   if (BOARD_VIEW_MODES.includes(savedBoardView)) return savedBoardView;
-  return localStorage.getItem('cr_3d') === 'true' ? '3d' : 'flat';
+  return localStorage.getItem('cr_3d') === 'true' ? 'realistic' : 'flat';
+};
+
+const getInitialBoardCornerRadius = () => {
+  const savedRadius = Number.parseInt(localStorage.getItem('cr_board_corner_radius') || '', 10);
+  if (Number.isFinite(savedRadius)) {
+    return Math.min(24, Math.max(0, savedRadius));
+  }
+  return 8;
 };
 
 const buildMoveAnimationPayload = (board, moveLike, actor = 'self') => {
@@ -169,9 +179,11 @@ export default function App() {
   const [customThemes, setCustomThemes] = useState(() => JSON.parse(localStorage.getItem('cr_custom_themes') || '[]'));
   const [showThemeCreator, setShowThemeCreator] = useState(false);
   const [boardView, setBoardView] = useState(() => getInitialBoardView());
+  const [boardCornerRadius, setBoardCornerRadius] = useState(() => getInitialBoardCornerRadius());
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cr_dark') !== 'false');
   const [pieceStyle, setPieceStyle] = useState('svg');
   const [liveVoiceChat, setLiveVoiceChat] = useState(() => localStorage.getItem('cr_live_voice_chat') === 'true');
+  const [seasonalDecorations, setSeasonalDecorations] = useState(() => localStorage.getItem('cr_seasonal_decorations') !== 'false');
   const [waitingGames, setWaitingGames] = useState([]);
   const [joinGameId, setJoinGameId] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -211,7 +223,7 @@ export default function App() {
   const [aiDifficulty, setAiDifficulty] = useState(envAiDifficulty);
 
   const isOnline = Boolean(gameId);
-  const board3d = boardView !== 'flat';
+  const board3d = boardView === 'realistic';
 
   useEffect(() => {
     const handlePopState = () => {
@@ -293,7 +305,11 @@ export default function App() {
     localStorage.setItem('cr_board_view', boardView);
     localStorage.setItem('cr_3d', board3d ? 'true' : 'false');
   }, [board3d, boardView]);
+  useEffect(() => {
+    localStorage.setItem('cr_board_corner_radius', String(boardCornerRadius));
+  }, [boardCornerRadius]);
   useEffect(() => { localStorage.setItem('cr_live_voice_chat', liveVoiceChat ? 'true' : 'false'); }, [liveVoiceChat]);
+  useEffect(() => { localStorage.setItem('cr_seasonal_decorations', seasonalDecorations ? 'true' : 'false'); }, [seasonalDecorations]);
 
   const customThemeVars = useMemo(() => {
     if (!theme.startsWith('custom:')) return null;
@@ -1580,6 +1596,7 @@ export default function App() {
     onSquareClick: handleSquareClick,
     theme,
     customThemeVars,
+    boardCornerRadius,
     pieceStyle,
     lastMove,
     flipped,
@@ -1666,8 +1683,12 @@ export default function App() {
       setPieceStyle,
       boardView,
       setBoardView,
+      boardCornerRadius,
+      setBoardCornerRadius,
       liveVoiceChat,
       setLiveVoiceChat,
+      seasonalDecorations,
+      setSeasonalDecorations,
       user,
       onEditProfile: () => setProfileModalUid(user.uid),
     },
@@ -1699,6 +1720,7 @@ export default function App() {
         onSignOut={signOut}
       />
       <div className="left-bg-art" aria-hidden="true" />
+      {seasonalDecorations && <SeasonDecorations />}
       <AppPageRouter
         currentPage={currentPage}
         onNavigate={navigateToPage}

@@ -26,6 +26,7 @@ export default function BoardShell({
   onSquareClick,
   theme,
   customThemeVars,
+  boardCornerRadius,
   pieceStyle,
   lastMove,
   flipped,
@@ -103,6 +104,7 @@ export default function BoardShell({
         onSquareClick={onSquareClick}
         theme={theme}
         customThemeVars={customThemeVars}
+        boardCornerRadius={boardCornerRadius}
         pieceStyle={pieceStyle}
         lastMove={lastMove}
         flipped={flipped}
