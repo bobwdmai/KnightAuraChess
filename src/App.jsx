@@ -176,6 +176,7 @@ export default function App() {
   const [board3d, setBoard3d] = useState(() => localStorage.getItem('cr_3d') === 'true');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cr_dark') !== 'false');
   const [pieceStyle, setPieceStyle] = useState('svg');
+  const [liveVoiceChat, setLiveVoiceChat] = useState(() => localStorage.getItem('cr_live_voice_chat') === 'true');
   const [waitingGames, setWaitingGames] = useState([]);
   const [joinGameId, setJoinGameId] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -251,6 +252,7 @@ export default function App() {
   // Persist theme and 3D selections
   useEffect(() => { localStorage.setItem('cr_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('cr_3d', board3d ? 'true' : 'false'); }, [board3d]);
+  useEffect(() => { localStorage.setItem('cr_live_voice_chat', liveVoiceChat ? 'true' : 'false'); }, [liveVoiceChat]);
 
   const customThemeVars = useMemo(() => {
     if (!theme.startsWith('custom:')) return null;
@@ -1666,7 +1668,13 @@ export default function App() {
 
           {/* Live game chat */}
           {isOnline && gameData?.status === 'active' && gameId && user && firebaseEnabled && (
-            <GameChat gameId={gameId} currentUser={user} currentUserName={displayName} />
+            <GameChat
+              gameId={gameId}
+              currentUser={user}
+              currentUserName={displayName}
+              liveVoiceChat={liveVoiceChat}
+              playerColor={playerColor}
+            />
           )}
         </section>
 
@@ -2046,6 +2054,26 @@ export default function App() {
                     <button className={`piece-set-btn${board3d ? ' active' : ''}`} onClick={() => setBoard3d(true)}>
                       <span className="piece-set-preview">🎲</span>
                       3D
+                    </button>
+                  </div>
+                </div>
+
+                <div className="settings-section">
+                  <span className="settings-section-label">Voice Chat</span>
+                  <div className="piece-set-grid">
+                    <button
+                      className={`piece-set-btn${!liveVoiceChat ? ' active' : ''}`}
+                      onClick={() => setLiveVoiceChat(false)}
+                    >
+                      <span className="piece-set-preview">🔇</span>
+                      Off
+                    </button>
+                    <button
+                      className={`piece-set-btn${liveVoiceChat ? ' active' : ''}`}
+                      onClick={() => setLiveVoiceChat(true)}
+                    >
+                      <span className="piece-set-preview">🎤</span>
+                      Peer Voice
                     </button>
                   </div>
                 </div>

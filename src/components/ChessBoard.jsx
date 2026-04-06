@@ -37,6 +37,11 @@ export default function ChessBoard({
   board3d,
   moveAnimation,
 }) {
+  const handleSquarePress = (event, square) => {
+    event.preventDefault();
+    onSquareClick(square);
+  };
+
   const filesBase = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranksBase = ['8', '7', '6', '5', '4', '3', '2', '1'];
 
@@ -185,7 +190,8 @@ export default function ChessBoard({
                     key={square}
                     type="button"
                     className={squareClass}
-                    onClick={() => onSquareClick(square)}
+                    onClick={(event) => event.preventDefault()}
+                    onPointerUp={(event) => handleSquarePress(event, square)}
                     aria-label={`Square ${square}`}
                   >
                     {piece && (

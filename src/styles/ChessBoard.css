@@ -80,6 +80,7 @@
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
   outline: none;
 }
 

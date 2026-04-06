@@ -250,6 +250,7 @@
   background: transparent;
   box-shadow: none;
   isolation: isolate;
+  border-left: none;
   transition: filter 0.5s ease;
 }
 
@@ -280,6 +281,10 @@
 .board-section--3d .player-bar__clock {
   position: relative;
   z-index: 1;
+}
+
+.board-section--3d .player-bar--active-turn {
+  background: transparent;
 }
 
 .player-bar--active-turn {
@@ -1340,6 +1345,9 @@ textarea.select {
 }
 
 .game-chat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 7px 14px;
   font-size: 0.68rem;
   font-weight: 700;
@@ -1348,6 +1356,45 @@ textarea.select {
   color: var(--text-dim);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+}
+
+.game-chat__mode {
+  color: var(--accent-bright);
+}
+
+.game-chat__voice-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(90,144,32,0.08), rgba(90,144,32,0.02));
+}
+
+.game-chat__voice-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.game-chat__voice-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.2);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.game-chat__voice-dot--live {
+  background: #49c05f;
+  box-shadow: 0 0 10px rgba(73,192,95,0.6);
+}
+
+.game-chat__voice-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .game-chat__messages {
@@ -1400,6 +1447,22 @@ textarea.select {
   padding: 6px 14px;
   font-size: 0.8rem;
   flex-shrink: 0;
+}
+
+.game-chat__voice-btn {
+  min-width: 84px;
+}
+
+.game-chat__voice-btn--live {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.game-chat__speech-status {
+  padding: 0 12px 10px;
+  font-size: 0.76rem;
+  color: var(--text-dim);
 }
 
 /* ─── Move History ─── */
