@@ -496,7 +496,7 @@
 }
 
 .board-captured-piece--active {
-  animation: captured-throw-side 0.54s cubic-bezier(0.2, 0.84, 0.28, 1) 0.72s forwards;
+  animation: captured-throw-side 0.58s cubic-bezier(0.16, 0.9, 0.24, 1) 0.8s forwards;
 }
 
 @keyframes hand-idle {
@@ -518,11 +518,11 @@
     opacity: 1;
   }
   22% {
-    transform: translate3d(6px, calc((var(--carry-lift, 10px) + 12px) * -1), 0) rotate(8deg) scale(1.02);
+    transform: translate3d(10px, calc((var(--carry-lift, 10px) + 14px) * -1), 0) rotate(12deg) scale(1.04);
     opacity: 1;
   }
   100% {
-    transform: translate3d(var(--drop-x), var(--drop-y), 0) rotate(18deg) scale(0.78);
+    transform: translate3d(var(--drop-x), var(--drop-y), 0) rotate(26deg) scale(0.74);
     opacity: 0;
   }
 }

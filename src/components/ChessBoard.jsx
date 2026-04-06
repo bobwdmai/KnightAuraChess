@@ -200,10 +200,17 @@ export default function ChessBoard({
               files.map((file) => {
                 const square = `${file}${rank}`;
                 const piece = game.get(square);
+                const hideBoardPieceDuringCarry = Boolean(
+                  board3d &&
+                  moveAnimation &&
+                  square === moveAnimation.to &&
+                  moveProgress < 0.995
+                );
+                const visiblePiece = hideBoardPieceDuringCarry ? null : piece;
                 const isLight = (file.charCodeAt(0) + rank.charCodeAt(0)) % 2 === 1;
                 const isSelected = selectedSquare === square;
                 const isLegal = legalMoves.includes(square);
-                const isCapture = isLegal && piece && piece.color !== game.turn();
+                const isCapture = isLegal && visiblePiece && visiblePiece.color !== game.turn();
                 const isLastFrom = lastMove && lastMove.from === square;
                 const isLastTo = lastMove && lastMove.to === square;
                 const isCheck = checkSquare === square;
@@ -220,7 +227,7 @@ export default function ChessBoard({
                   isLastTo ? 'square--last-to' : '',
                   isCheck ? 'square--check' : '',
                   isAura && !isSelected && !isLegal ? 'square--aura' : '',
-                  piece ? 'square--occupied' : '',
+                  visiblePiece ? 'square--occupied' : '',
                   isSelected ? 'square--holding' : ''
                 ]
                   .filter(Boolean)
@@ -235,13 +242,13 @@ export default function ChessBoard({
                     onPointerUp={(event) => handleSquarePress(event, square)}
                     aria-label={`Square ${square}`}
                   >
-                    {piece && (
+                    {visiblePiece && (
                       <span className={`piece-shell${isAuraPiece ? ' piece-shell--aura' : ''}`}>
                         {effectivePieceStyle === 'svg' ? (
-                          renderPieceVisual(piece, 'piece-image')
+                          renderPieceVisual(visiblePiece, 'piece-image')
                         ) : (
-                          <span className={`piece piece--${piece.color}`}>
-                            {pieceLetters[piece.color][piece.type]}
+                          <span className={`piece piece--${visiblePiece.color}`}>
+                            {pieceLetters[visiblePiece.color][visiblePiece.type]}
                           </span>
                         )}
                         {isAuraPiece && <span className="piece-aura-mark">✦</span>}

@@ -220,7 +220,7 @@ export default function App() {
     const timer = setTimeout(() => {
       setMoveAnimation(null);
       lastAnimatedMoveRef.current = null;
-    }, moveAnimation.capturedPiece ? 1280 : 920);
+    }, moveAnimation.capturedPiece ? 1460 : 980);
     return () => clearTimeout(timer);
   }, [moveAnimation]);
 
