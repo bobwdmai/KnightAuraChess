@@ -337,7 +337,12 @@
 }
 
 .board-section--3d .player-bar--bottom {
-  margin-top: 12px;
+  margin-top: 18px;
+  transform: translateY(12px);
+}
+
+.board-section--3d .board-actions {
+  margin-top: 26px;
 }
 
 .board-section--3d .player-bar__info,

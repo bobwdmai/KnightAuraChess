@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import wp from '../assets/chess/cburnett/Chess_plt45.svg';
 import wn from '../assets/chess/cburnett/Chess_nlt45.svg';
 import wb from '../assets/chess/cburnett/Chess_blt45.svg';
@@ -125,8 +125,19 @@ export default function ChessBoard({
   const moveToCenter = getSquareCenter(moveAnimation?.to);
   const selectedHandCenter = board3d && selectedSquare && !moveAnimation ? getSquareCenter(selectedSquare) : null;
   const selectedPiece = board3d && selectedSquare && !moveAnimation ? game.get(selectedSquare) : null;
-  const moveDx = moveFromCenter && moveToCenter ? `calc(${moveToCenter.x} - ${moveFromCenter.x})` : '0px';
-  const moveDy = moveFromCenter && moveToCenter ? `calc(${moveToCenter.y} - ${moveFromCenter.y})` : '0px';
+  const [moveOverlayActive, setMoveOverlayActive] = useState(false);
+
+  useEffect(() => {
+    if (!(board3d && moveAnimation && moveFromCenter && moveToCenter)) {
+      setMoveOverlayActive(false);
+      return undefined;
+    }
+    setMoveOverlayActive(false);
+    const frame = requestAnimationFrame(() => {
+      setMoveOverlayActive(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [board3d, moveAnimation, moveFromCenter, moveToCenter]);
 
   const renderPieceVisual = (piece, className, style) => {
     if (effectivePieceStyle === 'svg') {
@@ -229,12 +240,12 @@ export default function ChessBoard({
           {board3d && moveAnimation && moveFromCenter && moveToCenter && (
             <div
               key={moveAnimation.key}
-              className={`board-hand-overlay board-hand-overlay--move board-hand-overlay--${moveAnimation.actor}`}
+              className={`board-hand-overlay board-hand-overlay--move board-hand-overlay--${moveAnimation.actor}${moveOverlayActive ? ' board-hand-overlay--active' : ''}`}
               style={{
-                '--hand-x': moveFromCenter.x,
-                '--hand-y': moveFromCenter.y,
-                '--move-dx': moveDx,
-                '--move-dy': moveDy,
+                '--hand-start-x': moveFromCenter.x,
+                '--hand-start-y': moveFromCenter.y,
+                '--hand-end-x': moveToCenter.x,
+                '--hand-end-y': moveToCenter.y,
                 '--drop-x': '38px',
                 '--drop-y': '18px',
               }}
