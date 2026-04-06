@@ -127,24 +127,29 @@ export default function ChessBoard({
   const selectedPiece = board3d && selectedSquare && !moveAnimation ? game.get(selectedSquare) : null;
   const [moveOverlayActive, setMoveOverlayActive] = useState(false);
   const [moveProgress, setMoveProgress] = useState(0);
+  const [movePlaced, setMovePlaced] = useState(false);
 
   useEffect(() => {
     if (!(board3d && moveAnimation && moveFromCenter && moveToCenter)) {
       setMoveOverlayActive(false);
       setMoveProgress(0);
+      setMovePlaced(false);
       return undefined;
     }
     setMoveOverlayActive(false);
     setMoveProgress(0);
+    setMovePlaced(false);
     let frame = 0;
     let start = 0;
-    const duration = 760;
+    const travelDuration = 780;
+    const settleDuration = 160;
     const tick = (timestamp) => {
       if (!start) start = timestamp;
       const elapsed = timestamp - start;
-      const progress = Math.min(elapsed / duration, 1);
+      const progress = Math.min(elapsed / travelDuration, 1);
       setMoveProgress(progress);
-      if (progress < 1) {
+      setMovePlaced(elapsed >= travelDuration + settleDuration);
+      if (elapsed < travelDuration + settleDuration) {
         frame = requestAnimationFrame(tick);
       }
     };
@@ -204,7 +209,7 @@ export default function ChessBoard({
                   board3d &&
                   moveAnimation &&
                   square === moveAnimation.to &&
-                  moveProgress < 0.995
+                  !movePlaced
                 );
                 const visiblePiece = hideBoardPieceDuringCarry ? null : piece;
                 const isLight = (file.charCodeAt(0) + rank.charCodeAt(0)) % 2 === 1;

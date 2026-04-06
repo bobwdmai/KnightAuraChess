@@ -325,6 +325,96 @@ export default function LearnPage({ onBack, onOpenTutorials, tutorialsOnly = fal
                   <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--knm">✦</span> Knight Move</span>
                 </div>
               </div>
+
+              <div className="learn-aura-indicator">
+                <div className="learn-aura-indicator-piece" aria-hidden="true">
+                  ♖
+                  <span className="learn-aura-indicator-mark">✦</span>
+                </div>
+                <div className="learn-aura-indicator-copy">
+                  <strong>Board indicator</strong>
+                  <p>
+                    On the live board, an empowered piece gets a soft green glow and a small
+                    <strong> ✦ mark</strong> so you can spot aura-enabled pieces at a glance.
+                    Knights project the aura, but they do not gain an extra jump themselves.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="learn-section learn-section--blue">
+            <div className="learn-section-badge">2</div>
+            <div className="learn-section-body">
+              <h3>Ride the Aura — Jump!</h3>
+              <p className="learn-section-subtitle">One leap, then keep going</p>
+              <p>
+                A piece inside the knight&apos;s aura can jump over <strong>exactly one</strong> blocker
+                along its normal movement path, then keep sliding as usual. It may
+                capture on any square it lands, even right after the jump.
+              </p>
+              <div className="learn-jump-demo">
+                <div className="learn-jump-track">
+                  <div className="learn-jump-cell learn-jump-cell--piece">♖</div>
+                  <div className="learn-jump-cell learn-jump-cell--empty"></div>
+                  <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
+                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
+                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
+                  <div className="learn-jump-cell learn-jump-cell--capture">♝</div>
+                </div>
+                <div className="learn-jump-arrow">
+                  <span>♖ leaps over ♟ and can land beyond it or capture ♝</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="learn-section learn-section--red">
+            <div className="learn-section-badge">3</div>
+            <div className="learn-section-body">
+              <h3>One Jump Per Move</h3>
+              <p className="learn-section-subtitle">The horse&apos;s gift has limits</p>
+              <p>
+                The knight shares its power for <strong>one leap only</strong>. After clearing
+                the first blocker, the next piece on that line still holds the file or diagonal.
+              </p>
+              <div className="learn-jump-demo">
+                <div className="learn-jump-track">
+                  <div className="learn-jump-cell learn-jump-cell--piece">♕</div>
+                  <div className="learn-jump-cell learn-jump-cell--empty"></div>
+                  <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
+                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
+                  <div className="learn-jump-cell learn-jump-cell--blocked">♜</div>
+                  <div className="learn-jump-cell learn-jump-cell--nogo">✗</div>
+                </div>
+                <div className="learn-jump-arrow">
+                  <span>♕ clears ♟ but ♜ still stops the line</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="learn-section learn-section--green">
+            <div className="learn-section-badge">4</div>
+            <div className="learn-section-body">
+              <h3>Every Piece Gets Wings</h3>
+              <p className="learn-section-subtitle">Pawns and kings can ride the aura too</p>
+              <p>
+                The horse&apos;s power reaches everyone. <strong>Pawns</strong> near a knight can
+                jump one square forward over a blocker. <strong>Kings</strong> can also jump one safe
+                square when empowered, which creates unusual defensive and attacking ideas.
+              </p>
+              <div className="learn-jump-demo">
+                <div className="learn-jump-mini">
+                  <div className="learn-jump-col">
+                    <div className="learn-jump-cell learn-jump-cell--land">○</div>
+                    <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
+                    <div className="learn-jump-cell learn-jump-cell--piece">♙</div>
+                    <div className="learn-jump-cell learn-jump-cell--knight-src">♞</div>
+                  </div>
+                  <span className="learn-jump-col-label">♙ leaps the blocker because it is riding ♞&apos;s aura</span>
+                </div>
+              </div>
             </div>
           </section>
 
