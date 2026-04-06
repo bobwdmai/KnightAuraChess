@@ -427,6 +427,33 @@
   padding: 0 24px;
 }
 
+.learn-tutorial-launch {
+  max-width: 800px;
+  margin: 0 auto 32px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  text-align: center;
+}
+
+.learn-tutorial-launch h3 {
+  margin: 0 0 8px;
+  color: var(--text-bright);
+  font-size: 1.1rem;
+}
+
+.learn-tutorial-launch p {
+  margin: 0 0 16px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.learn-tutorial-launch-btn {
+  min-width: 180px;
+}
+
 .learn-tutorials h3 {
   margin: 0 0 8px;
   font-size: 1.1rem;

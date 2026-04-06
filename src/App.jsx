@@ -104,14 +104,18 @@ const formatClock = (seconds) => {
 
 const getPageFromLocation = () => {
   if (typeof window === 'undefined') return 'game';
-  return /\/Tutorials\/?$/.test(window.location.pathname) ? 'learn' : 'game';
+  if (/\/Tutorials\/?$/.test(window.location.pathname)) return 'tutorials';
+  if (/\/Learn\/?$/.test(window.location.pathname)) return 'learn';
+  return 'game';
 };
 
 const setBrowserPage = (page, replace = false) => {
   if (typeof window === 'undefined') return;
-  const nextUrl = page === 'learn'
+  const nextUrl = page === 'tutorials'
     ? `${APP_BASE_PATH}/Tutorials`
-    : (APP_BASE_PATH ? `${APP_BASE_PATH}/` : '/');
+    : page === 'learn'
+      ? `${APP_BASE_PATH}/Learn`
+      : (APP_BASE_PATH ? `${APP_BASE_PATH}/` : '/');
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method](null, '', nextUrl);
 };
@@ -1548,7 +1552,9 @@ export default function App() {
 
       {/* ── Main Layout ── */}
       {currentPage === 'learn' ? (
-        <LearnPage onBack={() => navigateToPage('game')} />
+        <LearnPage onBack={() => navigateToPage('game')} onOpenTutorials={() => navigateToPage('tutorials')} />
+      ) : currentPage === 'tutorials' ? (
+        <LearnPage onBack={() => navigateToPage('learn')} tutorialsOnly />
       ) : (
         <>
           <main className="layout">
@@ -1757,7 +1763,7 @@ export default function App() {
               </button>
             ))}
             <button
-              className={`tab-btn ${currentPage === 'learn' ? 'active' : ''}`}
+              className={`tab-btn ${currentPage === 'learn' || currentPage === 'tutorials' ? 'active' : ''}`}
               onClick={() => navigateToPage('learn')}
             >
               <span className="tab-icon-wrap"><span className="tab-icon">📖</span></span>
