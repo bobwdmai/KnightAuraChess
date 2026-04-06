@@ -439,11 +439,11 @@
 }
 
 .board-hand--move {
-  animation: hand-carry 0.68s cubic-bezier(0.24, 0.86, 0.32, 1) forwards;
+  animation: hand-carry 0.82s cubic-bezier(0.24, 0.86, 0.32, 1) forwards;
 }
 
 .board-hand-piece--move {
-  animation: hand-piece-carry 0.68s cubic-bezier(0.24, 0.86, 0.32, 1) forwards;
+  animation: hand-piece-carry 0.82s cubic-bezier(0.24, 0.86, 0.32, 1) forwards;
 }
 
 .board-captured-piece {
@@ -455,7 +455,7 @@
   margin-left: -21px;
   margin-top: -21px;
   filter: drop-shadow(0 5px 7px rgba(0,0,0,0.35));
-  animation: captured-drop-side 0.5s cubic-bezier(0.2, 0.84, 0.28, 1) 0.45s forwards;
+  animation: captured-drop-side 0.5s cubic-bezier(0.2, 0.84, 0.28, 1) 0.62s forwards;
 }
 
 .board-captured-piece.board-hand-piece--text {
@@ -485,7 +485,11 @@
     transform: translate3d(0, -8px, 0) rotate(-6deg) scale(1);
     opacity: 1;
   }
-  82% {
+  90% {
+    transform: translate3d(var(--move-dx), calc(var(--move-dy) - 8px), 0) rotate(2deg) scale(1);
+    opacity: 1;
+  }
+  96% {
     transform: translate3d(var(--move-dx), calc(var(--move-dy) - 8px), 0) rotate(2deg) scale(1);
     opacity: 1;
   }
@@ -507,7 +511,11 @@
     transform: translate3d(0, -10px, 0) scale(1.05);
     opacity: 1;
   }
-  82% {
+  90% {
+    transform: translate3d(var(--move-dx), calc(var(--move-dy) - 10px), 0) scale(1.05);
+    opacity: 1;
+  }
+  96% {
     transform: translate3d(var(--move-dx), calc(var(--move-dy) - 10px), 0) scale(1.05);
     opacity: 1;
   }

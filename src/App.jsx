@@ -152,7 +152,18 @@ const LEARN_STEPS = [
 ];
 
 export default function App() {
-  const { user, authReady, profile, displayName, rating, signInWithGoogle, signInAnonymously, signOut } = useAuth();
+  const {
+    user,
+    authReady,
+    profile,
+    displayName,
+    rating,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    signInAnonymously,
+    signOut
+  } = useAuth();
   const [currentPage, setCurrentPage] = useState('game');
   const [game, setGame] = useState(() => createNewGame());
   const [moveHistory, setMoveHistory] = useState([]);
@@ -183,6 +194,10 @@ export default function App() {
   const [aiThinking, setAiThinking] = useState(false);
   const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState('play');
+  const [authMode, setAuthMode] = useState('signin');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState('');
   const [profileModalUid, setProfileModalUid] = useState(null);
   const [pendingDm, setPendingDm] = useState(null);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
@@ -222,7 +237,7 @@ export default function App() {
     const timer = setTimeout(() => {
       setMoveAnimation(null);
       lastAnimatedMoveRef.current = null;
-    }, moveAnimation.capturedPiece ? 900 : 760);
+    }, moveAnimation.capturedPiece ? 1040 : 860);
     return () => clearTimeout(timer);
   }, [moveAnimation]);
 
@@ -242,6 +257,24 @@ export default function App() {
     if (gameData.blackId === user.uid) return 'b';
     return null;
   }, [gameData, user]);
+
+  const handleEmailAuth = useCallback(async () => {
+    if (!authEmail.trim() || !authPassword.trim()) {
+      setAuthError('Enter an email and password.');
+      return;
+    }
+    setAuthError('');
+    try {
+      if (authMode === 'signup') {
+        await signUpWithEmail(authEmail.trim(), authPassword);
+      } else {
+        await signInWithEmail(authEmail.trim(), authPassword);
+      }
+      setAuthPassword('');
+    } catch (error) {
+      setAuthError(error?.message || 'Authentication failed.');
+    }
+  }, [authEmail, authMode, authPassword, signInWithEmail, signUpWithEmail]);
 
   // Apply dark/light theme to document root
   useEffect(() => {
@@ -1481,8 +1514,51 @@ export default function App() {
             </div>
           ) : (
             <div className="auth-actions">
-              <button className="btn btn-primary" onClick={signInWithGoogle}>Sign in</button>
-              <button className="btn btn-ghost" onClick={signInAnonymously}>Play as Guest</button>
+              <div className="auth-form">
+                <div className="auth-mode-toggle">
+                  <button
+                    className={`auth-mode-btn${authMode === 'signin' ? ' active' : ''}`}
+                    onClick={() => setAuthMode('signin')}
+                    type="button"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    className={`auth-mode-btn${authMode === 'signup' ? ' active' : ''}`}
+                    onClick={() => setAuthMode('signup')}
+                    type="button"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+                <div className="auth-form-row">
+                  <input
+                    className="select auth-input"
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="Email"
+                    autoComplete="email"
+                  />
+                  <input
+                    className="select auth-input"
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleEmailAuth(); }}
+                    placeholder="Password"
+                    autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                  />
+                </div>
+                <div className="auth-form-row">
+                  <button className="btn btn-primary" onClick={handleEmailAuth}>
+                    {authMode === 'signup' ? 'Create Account' : 'Email Sign In'}
+                  </button>
+                  <button className="btn btn-ghost" onClick={signInWithGoogle}>Google</button>
+                  <button className="btn btn-ghost" onClick={signInAnonymously}>Guest</button>
+                </div>
+                {authError && <div className="auth-error">{authError}</div>}
+              </div>
             </div>
           )}
         </div>

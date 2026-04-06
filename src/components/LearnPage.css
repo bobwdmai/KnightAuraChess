@@ -440,6 +440,152 @@
   color: var(--text-dim);
 }
 
+.learn-lesson-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.learn-lesson-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.learn-lesson-tab.active {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: var(--text-bright);
+}
+
+.learn-lesson-tab-tag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.learn-interactive-card {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+}
+
+.learn-interactive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.learn-step-counter {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.learn-interactive-copy h4 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: var(--text-bright);
+}
+
+.learn-interactive-goal {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.learn-step-card {
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+}
+
+.learn-step-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-bright);
+}
+
+.learn-step-card p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.learn-interactive-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.learn-demo-board {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: rgba(0,0,0,0.28);
+  border: 1px solid var(--border-subtle);
+  align-self: start;
+}
+
+.learn-demo-row {
+  display: flex;
+  gap: 3px;
+}
+
+.learn-demo-cell {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 1.25rem;
+  color: var(--text-bright);
+}
+
+.learn-demo-cell--light {
+  background: #f0d9b5;
+  color: #1f1a16;
+}
+
+.learn-demo-cell--dark {
+  background: #b58863;
+  color: #111;
+}
+
+.learn-demo-cell--target {
+  box-shadow: inset 0 0 0 2px rgba(98,153,36,0.55);
+}
+
+.learn-demo-cell--target::before {
+  content: '○';
+  color: #4d8a17;
+}
+
+.learn-demo-cell--path {
+  color: #dff6af;
+  background: linear-gradient(180deg, rgba(98,153,36,0.65), rgba(98,153,36,0.3));
+}
+
 .learn-tutorial-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -559,6 +705,14 @@
   }
 
   .learn-tutorial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-lesson-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-interactive-card {
     grid-template-columns: 1fr;
   }
 
