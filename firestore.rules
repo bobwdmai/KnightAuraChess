@@ -52,6 +52,15 @@ service cloud.firestore {
       ]);
     }
 
+    function isGameParticipant(gameId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/games/$(gameId)) &&
+        (
+          get(/databases/$(database)/documents/games/$(gameId)).data.whiteId == request.auth.uid ||
+          get(/databases/$(database)/documents/games/$(gameId)).data.blackId == request.auth.uid
+        );
+    }
+
     function isValidUsernameClaim(usernameKey, data) {
       return data.keys().hasOnly([
           'uid',
@@ -105,6 +114,18 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 200;
+      }
+
+      match /voice/{voiceDocId} {
+        allow read, write: if isGameParticipant(gameId);
+      }
+
+      match /voiceSessions/{sessionId} {
+        allow read, write: if isGameParticipant(gameId);
+
+        match /{candidateCollection}/{candidateId} {
+          allow read, write: if isGameParticipant(gameId);
+        }
       }
     }
 
