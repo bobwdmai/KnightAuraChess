@@ -136,6 +136,12 @@ Expected success response:
 `functions/api/move.js` now implements server-side move execution (auth check, legality check, sequence check, clocks/result update, and rating updates on game end).  
 If `VITE_MOVE_API_STRICT="true"`, the client no longer falls back to direct Firestore move writes.
 
+Additional hardening now included in the endpoint:
+- OAuth access token cache (refreshes before expiry)
+- Firebase ID-token verification cache with claim skew checks
+- Hard rate limits (per user+game burst and per-user minute window)
+- Structured JSON logs (`move_request_received`, `move_request_accepted`, `move_request_rejected`)
+
 ## 🚀 Deployment (Cloudflare Pages)
 
 This project is configured for seamless deployment via Cloudflare Pages:

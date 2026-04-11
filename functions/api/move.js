@@ -7,8 +7,52 @@ const JSON_HEADERS = {
   'access-control-allow-headers': 'content-type, authorization, x-idempotency-key',
 };
 
+const OAUTH_TOKEN_SAFETY_WINDOW_MS = 60_000;
+const AUTH_CACHE_MAX_MS = 15 * 60_000;
+const RATE_WINDOW_FAST_MS = 10_000;
+const RATE_WINDOW_SLOW_MS = 60_000;
+const RATE_LIMIT_FAST = 8;
+const RATE_LIMIT_SLOW = 24;
+const TOKEN_CLOCK_SKEW_SEC = 30;
+
+const oauthTokenCache = {
+  accessToken: null,
+  expiresAt: 0,
+  inFlight: null,
+};
+
+const idTokenCache = new Map();
+const perGameRateBucket = new Map();
+const perUserRateBucket = new Map();
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+function nowMs() {
+  return Date.now();
+}
+
+function createRequestId() {
+  return `mv_${nowMs().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function stableHash(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = (hash * 16777619) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+function logEvent(level, event, meta = {}) {
+  const payload = { ts: new Date().toISOString(), event, ...meta };
+  if (level === 'error') {
+    console.error(JSON.stringify(payload));
+    return;
+  }
+  console.log(JSON.stringify(payload));
 }
 
 function base64UrlEncode(input) {
@@ -53,19 +97,32 @@ async function signJwtRS256(payload, email, privateKeyPem) {
 }
 
 async function getGoogleAccessToken(env) {
+  const now = nowMs();
+  if (
+    oauthTokenCache.accessToken &&
+    oauthTokenCache.expiresAt - OAUTH_TOKEN_SAFETY_WINDOW_MS > now
+  ) {
+    return oauthTokenCache.accessToken;
+  }
+
+  if (oauthTokenCache.inFlight) {
+    return oauthTokenCache.inFlight;
+  }
+
+  oauthTokenCache.inFlight = (async () => {
   const email = env.FIREBASE_SERVICE_ACCOUNT_EMAIL;
   const privateKeyRaw = env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY;
   if (!email || !privateKeyRaw) {
     throw new ApiError('NOT_CONFIGURED', 'Service account credentials are missing', 503);
   }
   const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
-  const now = Math.floor(Date.now() / 1000);
+  const nowSec = Math.floor(Date.now() / 1000);
   const payload = {
     iss: email,
     sub: email,
     aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
+    iat: nowSec,
+    exp: nowSec + 3600,
     scope: 'https://www.googleapis.com/auth/datastore',
   };
   const assertion = await signJwtRS256(payload, email, privateKey);
@@ -82,10 +139,43 @@ async function getGoogleAccessToken(env) {
   if (!response.ok || !data?.access_token) {
     throw new ApiError('SERVICE_UNAVAILABLE', 'Failed to obtain service token', 503);
   }
-  return data.access_token;
+    const expiresInSec = Number.isFinite(data.expires_in) ? data.expires_in : 3600;
+    oauthTokenCache.accessToken = data.access_token;
+    oauthTokenCache.expiresAt = nowMs() + (expiresInSec * 1000);
+    return oauthTokenCache.accessToken;
+  })();
+
+  try {
+    return await oauthTokenCache.inFlight;
+  } finally {
+    oauthTokenCache.inFlight = null;
+  }
+}
+
+function decodeJwtPayload(idToken) {
+  const [, payload] = idToken.split('.');
+  if (!payload) return null;
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '==='.slice((normalized.length + 3) % 4);
+  const decoded = atob(padded);
+  return JSON.parse(decoded);
 }
 
 async function verifyFirebaseIdToken(idToken, env) {
+  const claims = decodeJwtPayload(idToken);
+  const nowSec = Math.floor(nowMs() / 1000);
+  if (claims?.exp && nowSec > Number(claims.exp) + TOKEN_CLOCK_SKEW_SEC) {
+    throw new ApiError('UNAUTHENTICATED', 'Token expired', 401);
+  }
+  if (claims?.iat && nowSec + TOKEN_CLOCK_SKEW_SEC < Number(claims.iat)) {
+    throw new ApiError('UNAUTHENTICATED', 'Token issued in the future', 401);
+  }
+
+  const cached = idTokenCache.get(idToken);
+  if (cached && cached.expiresAt > nowMs()) {
+    return cached.uid;
+  }
+
   const apiKey = env.FIREBASE_WEB_API_KEY;
   if (!apiKey) throw new ApiError('NOT_CONFIGURED', 'FIREBASE_WEB_API_KEY is missing', 503);
   const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
@@ -97,7 +187,11 @@ async function verifyFirebaseIdToken(idToken, env) {
   if (!response.ok || !Array.isArray(data?.users) || !data.users[0]?.localId) {
     throw new ApiError('UNAUTHENTICATED', 'Invalid ID token', 401);
   }
-  return data.users[0].localId;
+  const uid = data.users[0].localId;
+  const jwtExpMs = claims?.exp ? (Number(claims.exp) * 1000) : (nowMs() + AUTH_CACHE_MAX_MS);
+  const expiresAt = Math.min(jwtExpMs - (TOKEN_CLOCK_SKEW_SEC * 1000), nowMs() + AUTH_CACHE_MAX_MS);
+  idTokenCache.set(idToken, { uid, expiresAt });
+  return uid;
 }
 
 function docName(projectId, path) {
@@ -192,6 +286,43 @@ function validatePayload(payload) {
   return null;
 }
 
+function pruneBucket(bucket, now, windowMs) {
+  while (bucket.length && now - bucket[0] > windowMs) bucket.shift();
+}
+
+function enforceRateLimit(uid, gameId, now) {
+  const perGameKey = `${uid}:${gameId}`;
+  const gameBucket = perGameRateBucket.get(perGameKey) || [];
+  pruneBucket(gameBucket, now, RATE_WINDOW_FAST_MS);
+  if (gameBucket.length >= RATE_LIMIT_FAST) {
+    throw new ApiError('RATE_LIMITED', 'Too many move requests for this game', 429);
+  }
+  gameBucket.push(now);
+  perGameRateBucket.set(perGameKey, gameBucket);
+
+  const userBucket = perUserRateBucket.get(uid) || [];
+  pruneBucket(userBucket, now, RATE_WINDOW_SLOW_MS);
+  if (userBucket.length >= RATE_LIMIT_SLOW) {
+    throw new ApiError('RATE_LIMITED', 'Too many move requests', 429);
+  }
+  userBucket.push(now);
+  perUserRateBucket.set(uid, userBucket);
+}
+
+function cleanupCaches(now) {
+  for (const [token, entry] of idTokenCache.entries()) {
+    if (entry.expiresAt <= now) idTokenCache.delete(token);
+  }
+  for (const [key, bucket] of perGameRateBucket.entries()) {
+    pruneBucket(bucket, now, RATE_WINDOW_FAST_MS);
+    if (bucket.length === 0) perGameRateBucket.delete(key);
+  }
+  for (const [key, bucket] of perUserRateBucket.entries()) {
+    pruneBucket(bucket, now, RATE_WINDOW_SLOW_MS);
+    if (bucket.length === 0) perUserRateBucket.delete(key);
+  }
+}
+
 async function commitWrites(projectId, accessToken, writes) {
   const response = await fetch(
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`,
@@ -217,7 +348,12 @@ export async function onRequestOptions() {
 }
 
 export async function onRequestPost(context) {
+  const requestStartedAt = nowMs();
+  const requestId = context.request.headers.get('x-request-id') || createRequestId();
+  let uidHash = null;
+  let gameId = null;
   try {
+    cleanupCaches(requestStartedAt);
     const projectId = context.env.FIREBASE_PROJECT_ID;
     if (!projectId) throw new ApiError('NOT_CONFIGURED', 'FIREBASE_PROJECT_ID is missing', 503);
 
@@ -233,8 +369,20 @@ export async function onRequestPost(context) {
     }
     const payloadError = validatePayload(payload);
     if (payloadError) throw new ApiError('INVALID_PAYLOAD', payloadError, 400);
+    gameId = payload.gameId;
+
+    logEvent('info', 'move_request_received', {
+      requestId,
+      gameId,
+      expectedMoveSeq: payload.expectedMoveSeq,
+      from: payload.from,
+      to: payload.to,
+      idempotency: Boolean(context.request.headers.get('x-idempotency-key')),
+    });
 
     const uid = await verifyFirebaseIdToken(idToken, context.env);
+    uidHash = stableHash(uid);
+    enforceRateLimit(uid, payload.gameId, requestStartedAt);
     const accessToken = await getGoogleAccessToken(context.env);
 
     const gamePath = `games/${payload.gameId}`;
@@ -408,18 +556,43 @@ export async function onRequestPost(context) {
     });
 
     await commitWrites(projectId, accessToken, writes);
-    return json({
+    const response = json({
       ok: true,
       gameId: payload.gameId,
       moveSeq: nextSeq,
       status,
       winner,
       result,
+      requestId,
     });
+    logEvent('info', 'move_request_accepted', {
+      requestId,
+      uidHash,
+      gameId: payload.gameId,
+      nextSeq,
+      status,
+      durationMs: nowMs() - requestStartedAt,
+    });
+    return response;
   } catch (error) {
     if (error instanceof ApiError) {
-      return json({ ok: false, code: error.code, message: error.message }, error.status);
+      logEvent('error', 'move_request_rejected', {
+        requestId,
+        uidHash,
+        gameId,
+        code: error.code,
+        status: error.status,
+        durationMs: nowMs() - requestStartedAt,
+      });
+      return json({ ok: false, code: error.code, message: error.message, requestId }, error.status);
     }
-    return json({ ok: false, code: 'SERVICE_UNAVAILABLE', message: 'Move service failure' }, 503);
+    logEvent('error', 'move_request_failed', {
+      requestId,
+      uidHash,
+      gameId,
+      code: 'SERVICE_UNAVAILABLE',
+      durationMs: nowMs() - requestStartedAt,
+    });
+    return json({ ok: false, code: 'SERVICE_UNAVAILABLE', message: 'Move service failure', requestId }, 503);
   }
 }
