@@ -72,6 +72,38 @@ export default function GameChat({
   const activeCurrentVoiceUnsubRef = useRef(null);
   const addedCandidateIdsRef = useRef(new Set());
   const voiceConnectTimeoutRef = useRef(null);
+  const browserHasVoiceSupport =
+    typeof navigator !== 'undefined' &&
+    !!navigator.mediaDevices?.getUserMedia &&
+    typeof RTCPeerConnection !== 'undefined';
+  const secureContextReady = typeof window === 'undefined' ? true : window.isSecureContext !== false;
+
+  const voiceDiagnostics = [
+    { label: 'Page', value: secureContextReady ? 'HTTPS ready' : 'Insecure HTTP' },
+    { label: 'Browser', value: browserHasVoiceSupport ? 'Supported' : 'Unsupported' },
+    {
+      label: 'Mic',
+      value: !voiceEnabled
+        ? 'Off'
+        : localStreamRef.current
+          ? (micMuted ? 'Muted' : 'Live')
+          : 'Waiting',
+    },
+    {
+      label: 'Signaling',
+      value: !voiceEnabled
+        ? 'Idle'
+        : currentSessionIdRef.current
+          ? 'Session linked'
+          : 'Starting',
+    },
+    {
+      label: 'Peer',
+      value: voiceEnabled
+        ? (peerRef.current?.connectionState || 'Idle')
+        : 'Idle',
+    },
+  ];
 
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
@@ -453,6 +485,14 @@ export default function GameChat({
             >
               {micMuted ? 'Unmute Mic' : 'Mute Mic'}
             </button>
+          </div>
+          <div className="game-chat__voice-diagnostics" aria-label="Voice diagnostics">
+            {voiceDiagnostics.map((item) => (
+              <div key={item.label} className="game-chat__voice-diagnostic">
+                <span className="game-chat__voice-diagnostic-label">{item.label}</span>
+                <span className="game-chat__voice-diagnostic-value">{item.value}</span>
+              </div>
+            ))}
           </div>
           <audio ref={remoteAudioRef} autoPlay playsInline />
           {voiceError && <div className="game-chat__speech-status">{voiceError}</div>}

@@ -2073,6 +2073,36 @@ textarea.select {
   gap: 8px;
 }
 
+.game-chat__voice-diagnostics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.game-chat__voice-diagnostic {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.04);
+}
+
+.game-chat__voice-diagnostic-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.game-chat__voice-diagnostic-value {
+  font-size: 0.8rem;
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
 .game-chat__messages {
   height: 150px;
   overflow-y: auto;
