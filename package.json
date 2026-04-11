@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test:engine": "node --test src/engine.test.mjs",
     "test:ui": "vitest run",
+    "test:e2e": "playwright test",
     "test:rules": "node --test src/firestore.rules.test.mjs",
     "test:rules:emulator": "firebase emulators:exec --only firestore \"npm run test:rules\"",
     "test": "npm run test:engine && npm run test:ui",
@@ -34,6 +35,7 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@eslint/js": "^9.24.0",
     "@firebase/rules-unit-testing": "^5.0.0",
     "@testing-library/jest-dom": "^6.9.1",

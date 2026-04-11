@@ -20,6 +20,8 @@ async function seedGame(overrides = {}) {
       whiteId: 'white-player',
       blackId: 'black-player',
       status: 'active',
+      fen: 'start-fen',
+      moveSeq: 0,
       createdAt: new Date().toISOString(),
       ...overrides,
     });
@@ -190,5 +192,39 @@ test('unauthenticated users cannot update games', async () => {
 
   await assertFails(
     updateDoc(doc(anonymousDb, 'games', 'game-1'), { lastMove: 'e2e4' })
+  );
+});
+
+test('participants cannot change fen without incrementing moveSeq', async () => {
+  const whiteDb = testEnv.authenticatedContext('white-player').firestore();
+
+  await assertFails(
+    updateDoc(doc(whiteDb, 'games', 'game-1'), {
+      fen: 'next-fen',
+      lastMove: {
+        from: 'e2',
+        to: 'e4',
+        san: 'e4',
+      },
+      updatedAt: new Date().toISOString(),
+    })
+  );
+});
+
+test('participants can change fen when moveSeq increments and lastMove.seq matches', async () => {
+  const whiteDb = testEnv.authenticatedContext('white-player').firestore();
+
+  await assertSucceeds(
+    updateDoc(doc(whiteDb, 'games', 'game-1'), {
+      fen: 'next-fen',
+      moveSeq: 1,
+      lastMove: {
+        from: 'e2',
+        to: 'e4',
+        san: 'e4',
+        seq: 1,
+      },
+      updatedAt: new Date().toISOString(),
+    })
   );
 });

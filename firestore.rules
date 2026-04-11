@@ -61,6 +61,21 @@ service cloud.firestore {
         );
     }
 
+    function isMoveStateUpdate() {
+      return request.resource.data.fen != resource.data.fen;
+    }
+
+    function hasValidMoveSeqTransition() {
+      return request.resource.data.moveSeq is int &&
+        request.resource.data.lastMove is map &&
+        request.resource.data.lastMove.seq is int &&
+        request.resource.data.lastMove.seq == request.resource.data.moveSeq &&
+        (
+          (resource.data.moveSeq is int && request.resource.data.moveSeq == resource.data.moveSeq + 1) ||
+          (!(resource.data.moveSeq is int) && request.resource.data.moveSeq == 1)
+        );
+    }
+
     function isValidUsernameClaim(usernameKey, data) {
       return data.keys().hasOnly([
           'uid',
@@ -118,7 +133,9 @@ service cloud.firestore {
     match /games/{gameId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.whiteId == request.auth.uid;
-      allow update, delete: if isGameParticipant(gameId);
+      allow update: if isGameParticipant(gameId) &&
+        (!isMoveStateUpdate() || hasValidMoveSeqTransition());
+      allow delete: if isGameParticipant(gameId);
 
       match /messages/{messageId} {
         allow read: if isSignedIn();

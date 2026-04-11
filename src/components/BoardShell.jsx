@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import ChessBoard from './ChessBoard.jsx';
 import PlayerBar from './PlayerBar.jsx';
 import PromotionPicker from './PromotionPicker.jsx';
+import PreGameSetupModal from './PreGameSetupModal.jsx';
 
 const GameChat = lazy(() => import('./GameChat.jsx'));
 
@@ -12,6 +13,7 @@ export default function BoardShell({
   aiEnabled,
   playerColor,
   aiDifficulty,
+  connectionState,
   gameStatusText,
   incomingChallenge,
   onAcceptChallenge,
@@ -37,6 +39,7 @@ export default function BoardShell({
   onChoosePromotion,
   onCancelPromotion,
   onFlipBoard,
+  onOpenSetup,
   onNewGame,
   onStopAi,
   onLeaveMatch,
@@ -49,7 +52,16 @@ export default function BoardShell({
   user,
   displayName,
   liveVoiceChat,
+  setupModalProps,
 }) {
+  const connectionLabel = connectionState === 'live'
+    ? 'Live'
+    : connectionState === 'reconnecting'
+      ? 'Reconnecting'
+      : connectionState === 'connecting'
+        ? 'Connecting'
+        : 'Offline';
+
   return (
     <section className={`board-section${board3d ? ' board-section--3d' : ''}${boardView === 'realistic' ? ' board-section--realistic' : ''}`}>
       <div className="board-header">
@@ -58,6 +70,9 @@ export default function BoardShell({
           {isOnline ? 'Live Match' : aiEnabled ? 'vs AI' : 'Practice'}
         </div>
         <span className="game-status-text">{gameStatusText}</span>
+        {isOnline && (
+          <span className={`connection-chip connection-chip--${connectionState}`}>{connectionLabel}</span>
+        )}
         {isOnline && playerColor && (
           <div className="player-chip">{playerColor === 'w' ? 'White' : 'Black'}</div>
         )}
@@ -132,6 +147,9 @@ export default function BoardShell({
         <button className="btn btn-ghost" onClick={onFlipBoard} title="Flip board">
           ⇅ Flip
         </button>
+        <button className="btn btn-ghost" onClick={onOpenSetup} title="Game setup">
+          ⚙ Setup
+        </button>
         <button className="btn btn-ghost" onClick={onNewGame} disabled={isOnline} title="New game">
           + New
         </button>
@@ -168,6 +186,8 @@ export default function BoardShell({
           />
         </Suspense>
       )}
+
+      <PreGameSetupModal {...setupModalProps} />
     </section>
   );
 }
