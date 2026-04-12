@@ -101,18 +101,6 @@ Use these secret names instead:
   - `functions/api/move.js`: server-authoritative move execution.
   - `functions/api/text-ai.js`: proxy endpoint for chat AI.
 - Firestore rules are in `firestore.rules`.
-- Service status dashboard: standalone Cloudflare Worker (`service-worker/`) deployed to `service.knightaurachess.com`.
-  - Deploy: `cd service-worker && npx wrangler deploy`
-  - Access restricted to Firebase user with `displayName === "Mega_penguin123"`.
-  - Secrets (set via `wrangler secret put` inside `service-worker/`):
-    - `FIREBASE_PROJECT_ID`, `FIREBASE_WEB_API_KEY` (shared with Pages worker)
-    - `FIREBASE_SERVICE_ACCOUNT_EMAIL`, `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY` (shared)
-    - `FIREBASE_AUTH_DOMAIN` (e.g. `your-project.firebaseapp.com`)
-    - `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_STORAGE_BUCKET`
-    - `CF_API_TOKEN` — Cloudflare API token with **Pages:Edit** + **Account:Read** permissions
-    - `CF_ACCOUNT_ID` — Cloudflare account ID (visible in the dashboard sidebar)
-    - `CF_PAGES_PROJECT` — Pages project name (defaults to `knightaurachess`)
-    - `CF_DEPLOY_HOOK` — (optional) Pages deploy hook URL; enables the "Trigger Git Deploy" button
 
 ## Architecture Summary
 
