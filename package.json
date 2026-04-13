@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Chess variant where pieces near knights can jump over blockers",
   "type": "module",
-  "main": "electron/main.cjs",
   "engines": {
     "node": ">=20.19.0"
   },
@@ -17,10 +16,7 @@
     "test": "npm run test:engine && npm run test:ui",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "build:electron-web": "cross-env VITE_BASE_PATH=./ vite build",
-    "dist:win": "npm run build:electron-web && electron-builder --win nsis --x64 --publish never",
-    "dist:win:publish": "npm run build:electron-web && electron-builder --win nsis --x64 --publish always"
+    "preview": "vite preview"
   },
   "keywords": [
     "chess",
@@ -45,9 +41,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^6.0.1",
-    "cross-env": "^7.0.3",
-    "electron": "^37.10.3",
-    "electron-builder": "^26.8.1",
     "eslint": "^9.24.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.0",
@@ -56,26 +49,5 @@
     "jsdom": "^27.0.1",
     "vite": "^8.0.8",
     "vitest": "^4.1.4"
-  },
-  "build": {
-    "appId": "com.knightaurachess.desktop",
-    "productName": "KnightAuraChess",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "package.json"
-    ],
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
   }
 }

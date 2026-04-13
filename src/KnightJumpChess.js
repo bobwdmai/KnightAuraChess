@@ -147,8 +147,9 @@ class KnightJumpChess extends Chess {
     const jumpMoves = this.generateJumpMoves(options);
     const moverColor = this.turn();
 
-    const safeStandardMoves = standardMoves.filter((move) => this._isStandardMoveSafe(move, moverColor));
-    const safeJumpMoves = jumpMoves.filter((move) => this._isJumpMoveSafe(move, moverColor));
+    // Optimization: Reuse safety check logic
+    const safeStandardMoves = standardMoves.filter((move) => this._isMoveSafe(move, moverColor, false));
+    const safeJumpMoves = jumpMoves.filter((move) => this._isMoveSafe(move, moverColor, true));
 
     // If options.verbose is false, return just the SAN notation
     if (options.verbose === false || !options.verbose) {
@@ -158,6 +159,20 @@ class KnightJumpChess extends Chess {
 
     const prettyStandardMoves = safeStandardMoves.map(move => this._formatStandardMove(move, safeStandardMoves));
     return [...prettyStandardMoves, ...safeJumpMoves];
+  }
+
+  /**
+   * Unified safety check to avoid redundant instance creation
+   */
+  _isMoveSafe(move, moverColor, isJump) {
+    const copy = new KnightJumpChess(this.fen());
+    if (isJump) {
+      if (!copy.makeJumpMove(move)) return false;
+    } else {
+      copy._makeMove(move);
+      copy._incPositionCount();
+    }
+    return !copy.isKingCapturable(moverColor);
   }
 
   /**
