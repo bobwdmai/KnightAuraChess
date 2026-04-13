@@ -800,11 +800,13 @@
 .player-bar--top {
   margin-bottom: 8px;
   align-self: flex-start;
+  z-index: 10;
 }
 
 .player-bar--bottom {
   margin-top: 8px;
   align-self: flex-start;
+  z-index: 10;
 }
 
 /* ─── Dimensional player bars ─── */
@@ -818,8 +820,8 @@
 }
 
 .board-section--3d .player-bar--bottom {
-  margin-top: 20px;
-  transform: translateY(10px);
+  margin-top: 24px;
+  transform: translateY(16px);
 }
 
 .board-section--3d .board-actions {
@@ -858,8 +860,8 @@
 }
 
 .board-section--realistic .player-bar__name {
-  color: #f6ebd3;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.5);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
   font-weight: 700;
 }
 
@@ -882,9 +884,10 @@
     inset 0 1px 0 rgba(255,255,255,0.08),
     inset 0 -1px 0 rgba(0,0,0,0.38),
     0 8px 14px rgba(0,0,0,0.24);
-  color: #f3e4bd;
-  letter-spacing: 0.07em;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.55);
+  color: #fff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  font-weight: 800;
   overflow: hidden;
 }
 
@@ -1063,6 +1066,37 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 520px) {
+  .player-bar {
+    padding: 5px 8px;
+    min-height: 36px;
+  }
+  .player-bar__name {
+    font-size: 0.82rem;
+  }
+  .player-bar__rating {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+  }
+  .player-bar__clock {
+    font-size: 0.88rem;
+    min-width: 56px;
+    padding: 3px 8px;
+  }
+  .board-section--realistic .player-bar__clock {
+    padding: 4px 10px 4px 28px;
+  }
+  .board-section--realistic .player-bar__clock::before {
+    width: 14px;
+    height: 14px;
+    left: 8px;
+  }
+  .board-section--realistic .player-bar__clock::after {
+    left: 15px;
+    width: 6px;
+  }
+}
+
 .promotion-picker {
   width: min(580px, 100%);
   margin-top: 12px;
@@ -1178,6 +1212,8 @@
   margin-top: 10px;
   width: 100%;
   max-width: 580px;
+  position: relative;
+  z-index: 10;
 }
 
 .board-actions .btn {
