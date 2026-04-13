@@ -325,6 +325,36 @@ export default function GameSidebar({
 
             <div className="settings-section">
               <div className="settings-section-heading">
+                <span className="settings-section-label">Animation Intensity</span>
+                <span className="settings-section-rail" aria-hidden="true" />
+              </div>
+              <div className="piece-set-grid">
+                <button
+                  className={`piece-set-btn${settingsProps.animationIntensity === 'normal' ? ' active' : ''}`}
+                  onClick={() => settingsProps.setAnimationIntensity('normal')}
+                >
+                  <span className="piece-set-preview">★★★</span>
+                  Normal
+                </button>
+                <button
+                  className={`piece-set-btn${settingsProps.animationIntensity === 'low' ? ' active' : ''}`}
+                  onClick={() => settingsProps.setAnimationIntensity('low')}
+                >
+                  <span className="piece-set-preview">★★☆</span>
+                  Low
+                </button>
+                <button
+                  className={`piece-set-btn${settingsProps.animationIntensity === 'off' ? ' active' : ''}`}
+                  onClick={() => settingsProps.setAnimationIntensity('off')}
+                >
+                  <span className="piece-set-preview">☆☆☆</span>
+                  Off
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <div className="settings-section-heading">
                 <span className="settings-section-label">Corner Rounding</span>
                 <span className="settings-section-rail" aria-hidden="true" />
               </div>

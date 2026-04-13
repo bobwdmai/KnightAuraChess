@@ -200,6 +200,7 @@ export default function App() {
     if (Number.isNaN(raw)) return 100;
     return Math.min(180, Math.max(20, raw));
   });
+  const [animationIntensity, setAnimationIntensity] = useState(() => localStorage.getItem('cr_anim_intensity') || 'normal');
   const [waitingGames, setWaitingGames] = useState([]);
   const [joinGameId, setJoinGameId] = useState('');
   const [aiEnabled, setAiEnabled] = useState(false);
@@ -1918,6 +1919,11 @@ export default function App() {
       onStartAi: handleStartAiFromSetup,
       onStartOnline: handleStartOnlineFromSetup,
       isOnline,
+      animationIntensity,
+      setAnimationIntensity: (val) => {
+        setAnimationIntensity(val);
+        localStorage.setItem('cr_anim_intensity', val);
+      },
     },
   };
 
@@ -1995,6 +2001,11 @@ export default function App() {
       setSeasonalDecorations,
       seasonalDecorationDensity,
       setSeasonalDecorationDensity,
+      animationIntensity,
+      setAnimationIntensity: (val) => {
+        setAnimationIntensity(val);
+        localStorage.setItem('cr_anim_intensity', val);
+      },
       user,
       onEditProfile: () => setProfileModalUid(user.uid),
     },
@@ -2015,6 +2026,14 @@ export default function App() {
 
   return (
     <div className="app">
+      <style>
+        {`
+          :root {
+            ${animationIntensity === 'off' ? '--anim-duration-move: 0s; --anim-duration-settle: 0s;' : ''}
+            ${animationIntensity === 'low' ? '--anim-duration-move: 0.1s; --anim-duration-settle: 0.04s;' : ''}
+          }
+        `}
+      </style>
       <AppHeader
         authReady={authReady}
         user={user}

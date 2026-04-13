@@ -16,6 +16,8 @@ export default function PreGameSetupModal({
   onStartAi,
   onStartOnline,
   isOnline,
+  animationIntensity,
+  setAnimationIntensity,
 }) {
   if (!isOpen) return null;
 
@@ -80,6 +82,30 @@ export default function PreGameSetupModal({
                   {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="setup-modal__section">
+            <p className="play-section-label">Animation Intensity</p>
+            <div className="piece-set-grid">
+              <button
+                className={`piece-set-btn${animationIntensity === 'normal' ? ' active' : ''}`}
+                onClick={() => setAnimationIntensity('normal')}
+              >
+                Normal
+              </button>
+              <button
+                className={`piece-set-btn${animationIntensity === 'low' ? ' active' : ''}`}
+                onClick={() => setAnimationIntensity('low')}
+              >
+                Low
+              </button>
+              <button
+                className={`piece-set-btn${animationIntensity === 'off' ? ' active' : ''}`}
+                onClick={() => setAnimationIntensity('off')}
+              >
+                Off
+              </button>
             </div>
           </div>
 
