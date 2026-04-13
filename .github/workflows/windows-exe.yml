@@ -2,6 +2,11 @@ name: Build Windows EXE
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish installer to GitHub Releases'
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -22,12 +27,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build EXE
+      - name: Build EXE (artifact-only)
+        if: ${{ !inputs.publish_release }}
         run: npm run dist:win
+
+      - name: Build EXE (publish to GitHub Releases)
+        if: ${{ inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:win:publish
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: KnightAuraChess-windows-exe
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.blockmap
           if-no-files-found: error

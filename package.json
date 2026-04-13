@@ -19,7 +19,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:electron-web": "cross-env VITE_BASE_PATH=./ vite build",
-    "dist:win": "npm run build:electron-web && electron-builder --win nsis --x64"
+    "dist:win": "npm run build:electron-web && electron-builder --win nsis --x64 --publish never",
+    "dist:win:publish": "npm run build:electron-web && electron-builder --win nsis --x64 --publish always"
   },
   "keywords": [
     "chess",
