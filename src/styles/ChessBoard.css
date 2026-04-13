@@ -19,8 +19,8 @@
   --highlight-from: rgba(155, 199, 0, 0.41);
   --highlight-to: rgba(155, 199, 0, 0.41);
   --selected: rgba(20, 85, 30, 0.5);
-  --legal-dot: rgba(0, 0, 0, 0.12);
-  --legal-capture: rgba(20, 85, 30, 0.3);
+  --legal-dot: rgba(0, 0, 0, 0.25);
+  --legal-capture: rgba(20, 85, 30, 0.5);
   --check: rgba(255, 0, 0, 0.5);
   --knight-aura: rgba(98, 153, 36, 0.12);
 }
@@ -31,8 +31,8 @@
   --highlight-from: rgba(155, 199, 0, 0.41);
   --highlight-to: rgba(155, 199, 0, 0.41);
   --selected: rgba(20, 85, 30, 0.5);
-  --legal-dot: rgba(0, 0, 0, 0.1);
-  --legal-capture: rgba(20, 85, 30, 0.3);
+  --legal-dot: rgba(0, 0, 0, 0.25);
+  --legal-capture: rgba(20, 85, 30, 0.5);
   --check: rgba(255, 0, 0, 0.5);
   --knight-aura: rgba(98, 153, 36, 0.15);
 }
@@ -43,8 +43,8 @@
   --highlight-from: rgba(155, 199, 0, 0.41);
   --highlight-to: rgba(155, 199, 0, 0.41);
   --selected: rgba(20, 85, 30, 0.5);
-  --legal-dot: rgba(0, 0, 0, 0.12);
-  --legal-capture: rgba(20, 85, 30, 0.3);
+  --legal-dot: rgba(0, 0, 0, 0.25);
+  --legal-capture: rgba(20, 85, 30, 0.5);
   --check: rgba(255, 0, 0, 0.5);
   --knight-aura: rgba(98, 153, 36, 0.12);
 }
@@ -204,6 +204,18 @@
   z-index: 1;
 }
 
+/* Invalid move micro-feedback */
+.square--invalid-shake .piece-shell {
+  animation: square-invalid-shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes square-invalid-shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+  40%, 60% { transform: translate3d(5px, 0, 0); }
+}
+
 /* Pieces */
 .piece-shell {
   position: relative;
@@ -313,6 +325,7 @@
   line-height: 1;
   box-shadow: 0 0 0 1px rgba(226, 255, 159, 0.38), 0 0 10px rgba(160, 214, 68, 0.45);
   text-shadow: 0 0 6px rgba(226, 255, 159, 0.6);
+  pointer-events: none;
   z-index: 4;
 }
 

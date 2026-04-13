@@ -35,6 +35,7 @@ export default function BoardShell({
   flipped,
   inCheck,
   moveAnimation,
+  invalidMoveSquare,
   pendingPromotion,
   onChoosePromotion,
   onCancelPromotion,
@@ -131,6 +132,7 @@ export default function BoardShell({
         board3d={board3d}
         boardView={boardView}
         moveAnimation={moveAnimation}
+        invalidMoveSquare={invalidMoveSquare}
       />
 
       {pendingPromotion && (

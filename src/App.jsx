@@ -170,6 +170,7 @@ export default function App() {
   const [game, setGame] = useState(() => createNewGame());
   const [moveHistory, setMoveHistory] = useState([]);
   const [selectedSquare, setSelectedSquare] = useState(null);
+  const [invalidMoveFrom, setInvalidMoveFrom] = useState(null);
   const [legalMoves, setLegalMoves] = useState([]);
   const [pendingPromotion, setPendingPromotion] = useState(null);
   const [lastMove, setLastMove] = useState(null);
@@ -984,6 +985,10 @@ export default function App() {
           .map((m) => m.to);
         setLegalMoves(moves);
       } else {
+        if (selectedSquare) {
+          setInvalidMoveFrom(selectedSquare);
+          setTimeout(() => setInvalidMoveFrom(null), 400);
+        }
         setSelectedSquare(null);
         setLegalMoves([]);
       }
@@ -1874,6 +1879,7 @@ export default function App() {
     selectedSquare,
     legalMoves,
     onSquareClick: handleSquareClick,
+    invalidMoveSquare: invalidMoveFrom,
     theme,
     customThemeVars,
     boardCornerRadius,

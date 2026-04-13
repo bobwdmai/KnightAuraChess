@@ -39,6 +39,7 @@ export default function ChessBoard({
   board3d,
   boardView,
   moveAnimation,
+  invalidMoveSquare,
 }) {
   const handleSquarePress = (event, square) => {
     event.preventDefault();
@@ -185,6 +186,7 @@ export default function ChessBoard({
                 const isCheck = checkSquare === square;
                 const isAura = knightAuraSquares.has(square) && selectedSquare;
                 const isAuraPiece = auraPieceSquares.has(square);
+                const isInvalidFeedback = invalidMoveSquare === square;
 
                 const squareClass = [
                   'square',
@@ -197,7 +199,8 @@ export default function ChessBoard({
                   isCheck ? 'square--check' : '',
                   isAura && !isSelected && !isLegal ? 'square--aura' : '',
                   visiblePiece ? 'square--occupied' : '',
-                  isSelected ? 'square--holding' : ''
+                  isSelected ? 'square--holding' : '',
+                  isInvalidFeedback ? 'square--invalid-shake' : ''
                 ]
                   .filter(Boolean)
                   .join(' ');
@@ -207,8 +210,7 @@ export default function ChessBoard({
                     key={square}
                     type="button"
                     className={squareClass}
-                    onClick={(event) => event.preventDefault()}
-                    onPointerUp={(event) => handleSquarePress(event, square)}
+                    onClick={(event) => handleSquarePress(event, square)}
                     aria-label={`Square ${square}`}
                   >
                     {visiblePiece && (
