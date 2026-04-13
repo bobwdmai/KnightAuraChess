@@ -419,7 +419,6 @@ export default function App() {
   }, [moveAnimation]);
 
   const playMoveAnimation = useCallback((board, moveLike, actor = 'self') => {
-    if (!board3d) return;
     const animation = buildMoveAnimationPayload(board, moveLike, actor);
     if (!animation) return;
     const dedupeKey = `${animation.from}-${animation.to}-${moveLike.san || ''}`;

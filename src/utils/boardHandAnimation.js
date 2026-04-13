@@ -14,7 +14,7 @@ const easeInOutCubic = (value) => (
     : 1 - ((-2 * value + 2) ** 3) / 2
 );
 
-export function useBoardHandAnimation({ enabled, moveAnimation, moveFromCenter, moveToCenter }) {
+export function useBoardHandAnimation({ enabled, is3D, moveAnimation, moveFromCenter, moveToCenter }) {
   const [moveOverlayActive, setMoveOverlayActive] = useState(false);
   const [moveProgress, setMoveProgress] = useState(0);
   const [movePlaced, setMovePlaced] = useState(false);
@@ -37,11 +37,30 @@ export function useBoardHandAnimation({ enabled, moveAnimation, moveFromCenter, 
     const tick = (timestamp) => {
       if (!start) start = timestamp;
       const elapsed = timestamp - start;
-      const travelProgress = Math.min(elapsed / BOARD_HAND_TRAVEL_MS, 1);
+      const computedStyle = getComputedStyle(document.body);
+      const rawMoveStr = computedStyle.getPropertyValue('--anim-duration-move').trim();
+      let travelMs = BOARD_HAND_TRAVEL_MS;
+      if (rawMoveStr) {
+        travelMs = rawMoveStr.endsWith('ms') ? parseFloat(rawMoveStr) : parseFloat(rawMoveStr) * 1000;
+      }
+      const rawSettleStr = computedStyle.getPropertyValue('--anim-duration-settle').trim();
+      let settleMs = BOARD_HAND_SETTLE_MS;
+      if (rawSettleStr) {
+        settleMs = rawSettleStr.endsWith('ms') ? parseFloat(rawSettleStr) : parseFloat(rawSettleStr) * 1000;
+      }
+      
+      const totalMs = travelMs + settleMs;
+      const effectiveTravelMs = travelMs > 0 ? travelMs : 1; // Prevent division by zero
+      const travelProgress = Math.min(elapsed / effectiveTravelMs, 1);
+      
       setMoveProgress(travelProgress);
-      setMovePlaced(elapsed >= BOARD_HAND_TOTAL_MS);
-      if (elapsed < BOARD_HAND_TOTAL_MS) {
+      setMovePlaced(elapsed >= totalMs);
+      if (elapsed < totalMs && travelMs > 0) {
         frame = requestAnimationFrame(tick);
+      } else if (travelMs === 0) {
+        // If reduced motion / 0 duration is configured, fast-forward logic
+        setMoveProgress(1);
+        setMovePlaced(true);
       }
     };
 
@@ -64,24 +83,24 @@ export function useBoardHandAnimation({ enabled, moveAnimation, moveFromCenter, 
     const dx = endX - startX;
     const dy = endY - startY;
     const distance = Math.hypot(dx, dy) || 1;
-    const sway = Math.sin(eased * Math.PI) * Math.min(distance * 0.01, 0.28);
-    const offsetX = (-dy / distance) * sway;
-    const offsetY = (dx / distance) * sway;
-    const lead = Math.sin(eased * Math.PI) * Math.min(distance * 0.018, 0.3);
-    const leadX = (dx / distance) * lead;
-    const leadY = (dy / distance) * lead;
+    const sway = is3D ? Math.sin(eased * Math.PI) * Math.min(distance * 0.01, 0.28) : 0;
+    const offsetX = is3D ? (-dy / distance) * sway : 0;
+    const offsetY = is3D ? (dx / distance) * sway : 0;
+    const lead = is3D ? Math.sin(eased * Math.PI) * Math.min(distance * 0.018, 0.3) : 0;
+    const leadX = is3D ? (dx / distance) * lead : 0;
+    const leadY = is3D ? (dy / distance) * lead : 0;
 
     return {
       x: `${startX + dx * eased + offsetX + leadX}%`,
       y: `${startY + dy * eased + offsetY + leadY}%`,
-      handTilt: -12 + eased * 14,
+      handTilt: is3D ? -12 + eased * 14 : 0,
       pieceTilt: 0,
       pieceScale: 1,
-      gripX: `${-5 + lead * 4}px`,
+      gripX: is3D ? `${-5 + lead * 4}px` : '0px',
       gripY: '0px',
       lift: 0,
     };
-  }, [moveFromCenter, moveProgress, moveToCenter]);
+  }, [moveFromCenter, moveProgress, moveToCenter, is3D]);
 
   return {
     moveOverlayActive,

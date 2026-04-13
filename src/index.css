@@ -62,6 +62,18 @@
   --transition-fast:  0.1s ease;
   --transition-base:  0.18s ease;
   --transition-slow:  0.28s ease;
+
+  /* ── Move Animations ── */
+  --anim-duration-move: 0.25s;
+  --anim-duration-settle: 0.08s;
+  --anim-easing-move: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-duration-move: 0s;
+    --anim-duration-settle: 0s;
+  }
 }
 
 [data-theme="light"] {

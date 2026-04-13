@@ -127,7 +127,8 @@ export default function ChessBoard({
   const moveFromCenter = getSquareCenter(moveAnimation?.from);
   const moveToCenter = getSquareCenter(moveAnimation?.to);
   const { moveOverlayActive, movePlaced, currentMoveCenter } = useBoardHandAnimation({
-    enabled: board3d,
+    enabled: !!moveAnimation,
+    is3D: board3d,
     moveAnimation,
     moveFromCenter,
     moveToCenter,
@@ -170,7 +171,6 @@ export default function ChessBoard({
                 const square = `${file}${rank}`;
                 const piece = game.get(square);
                 const hideBoardPieceDuringCarry = Boolean(
-                  board3d &&
                   moveAnimation &&
                   square === moveAnimation.to &&
                   !movePlaced
@@ -234,7 +234,7 @@ export default function ChessBoard({
               })
             )}
           </div>
-          {board3d && moveAnimation && moveFromCenter && moveToCenter && (
+          {moveAnimation && moveFromCenter && moveToCenter && (
             <div
               key={moveAnimation.key}
               className={`board-hand-overlay board-hand-overlay--move board-hand-overlay--${moveAnimation.actor}${moveOverlayActive ? ' board-hand-overlay--active' : ''}`}
