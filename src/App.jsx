@@ -1502,12 +1502,12 @@ export default function App() {
     }
   };
 
-  const calculateElo = (playerRating, opponentRating, score, kFactor = 32) => {
+  function calculateElo(playerRating, opponentRating, score, kFactor = 32) {
     const expected = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
     return Math.round(playerRating + kFactor * (score - expected));
-  };
+  }
 
-  const handleTimeout = async (losingColor) => {
+  async function handleTimeout(losingColor) {
     if (!gameId || !db || !gameData) return;
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     try {
@@ -1550,7 +1550,7 @@ export default function App() {
     } catch (err) {
       console.error('Timeout error:', err);
     }
-  };
+  }
 
   const handleChallengeFriend = async (friendUid, friendName) => {
     if (!user || !firebaseEnabled || !db) return;

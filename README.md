@@ -174,3 +174,11 @@ This project is configured for seamless deployment via Cloudflare Pages:
 4. **Environment Variables:** Add all the `VITE_FIREBASE_*` variables from your `.env` file into the Cloudflare Pages settings.
 
 Cloudflare will automatically build and deploy your app every time you push to the `main` branch!
+
+## 🪟 Windows `.exe` Package
+
+The repo now includes Electron packaging for Windows.
+
+- Local build command: `npm run dist:win`
+- GitHub Action: **Build Windows EXE** (`.github/workflows/windows-exe.yml`)
+- Download location after workflow run: Actions → Build Windows EXE → Artifacts → `KnightAuraChess-windows-exe`
