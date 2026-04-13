@@ -132,14 +132,7 @@ const formatClock = (seconds) => {
 
 const getPageFromLocation = () => {
   if (typeof window === 'undefined') return 'home';
-
-  // GitHub Pages SPA redirect: 404.html encodes the intended route as ?p=/path
-  const redirected = new URLSearchParams(window.location.search).get('p');
-  if (redirected) {
-    window.history.replaceState(null, '', APP_BASE_PATH + redirected);
-  }
-  const path = redirected || window.location.pathname;
-
+  const path = window.location.pathname;
   if (/\/SignIn\/?$/.test(path)) return 'signin';
   if (/\/Tutorials\/?$/.test(path)) return 'tutorials';
   if (/\/Learn\/?$/.test(path)) return 'learn';
