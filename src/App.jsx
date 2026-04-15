@@ -1,5 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AiWorker from './workers/aiWorker.js?worker';
+import { useOnlineClock } from './workers/useOnlineClock.js';
 import {
   addDoc,
   collection,
@@ -131,10 +132,12 @@ const formatClock = (seconds) => {
 
 const getPageFromLocation = () => {
   if (typeof window === 'undefined') return 'home';
-  if (/\/SignIn\/?$/.test(window.location.pathname)) return 'signin';
-  if (/\/Tutorials\/?$/.test(window.location.pathname)) return 'tutorials';
-  if (/\/Learn\/?$/.test(window.location.pathname)) return 'learn';
-  if (/\/Play\/?$/.test(window.location.pathname)) return 'game';
+  const path = window.location.pathname;
+  if (/\/SignIn\/?$/.test(path)) return 'signin';
+  if (/\/Tutorials\/?$/.test(path)) return 'tutorials';
+  if (/\/Learn\/?$/.test(path)) return 'learn';
+  if (/\/Play\/?$/.test(path)) return 'game';
+  if (/\/uptime\/?$/i.test(path)) return 'uptime';
   return 'home';
 };
 
@@ -145,6 +148,7 @@ const setBrowserPage = (page, replace = false) => {
   else if (page === 'tutorials') nextUrl = `${APP_BASE_PATH}/Tutorials`;
   else if (page === 'learn') nextUrl = `${APP_BASE_PATH}/Learn`;
   else if (page === 'game') nextUrl = `${APP_BASE_PATH}/Play`;
+  else if (page === 'uptime') nextUrl = `${APP_BASE_PATH}/uptime`;
   const method = replace ? 'replaceState' : 'pushState';
   window.history[method](null, '', nextUrl);
 };
@@ -511,43 +515,11 @@ export default function App() {
   }, [gameData?.timeControl, playerColor]);
 
   // Online clock countdown
-  useEffect(() => {
-    if (!isOnline || !gameData || gameData.status !== 'active') {
-      if (isOnline) {
-        setClockWhite(null);
-        setClockBlack(null);
-      }
-      return;
-    }
-    if (!gameData.timeControl) return;
-    // lastMoveAt may briefly be null on the first snapshot after toggleReady
-    const lastMoveMs = gameData.lastMoveAt?.toMillis?.() ?? Date.now();
-
-    timeoutFiredRef.current = false;
-    const turn = gameData.fen?.split(' ')?.[1] ?? 'w'; // whose clock is ticking
-
-    const tick = () => {
-      const elapsed = Math.max(0, (Date.now() - lastMoveMs) / 1000);
-      const wt = turn === 'w'
-        ? Math.max(0, (gameData.whiteTimeLeft ?? gameData.timeControl) - elapsed)
-        : (gameData.whiteTimeLeft ?? gameData.timeControl);
-      const bt = turn === 'b'
-        ? Math.max(0, (gameData.blackTimeLeft ?? gameData.timeControl) - elapsed)
-        : (gameData.blackTimeLeft ?? gameData.timeControl);
-      setClockWhite(wt);
-      setClockBlack(bt);
-      // Only the player on the clock submits the timeout
-      if (!timeoutFiredRef.current && playerColor === turn) {
-        if (turn === 'w' && wt <= 0) { timeoutFiredRef.current = true; handleTimeout('w'); }
-        if (turn === 'b' && bt <= 0) { timeoutFiredRef.current = true; handleTimeout('b'); }
-      }
-    };
-
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameData?.status, gameData?.lastMoveAt, gameData?.whiteTimeLeft, gameData?.blackTimeLeft, gameData?.timeControl, isOnline, playerColor]);
+  const { clockWhite: onlineWhite, clockBlack: onlineBlack } = useOnlineClock(
+    isOnline ? gameData : null,
+    playerColor,
+    handleTimeout
+  );
 
   // Local AI countdown clocks
   useEffect(() => {
@@ -585,6 +557,14 @@ export default function App() {
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, aiEnabled, selectedTimeControl, moveTimestamps, currentMoveStartTime, game, localResult]);
+
+  // Unify clock state for the UI
+  useEffect(() => {
+    if (isOnline) {
+      setClockWhite(onlineWhite);
+      setClockBlack(onlineBlack);
+    }
+  }, [isOnline, onlineWhite, onlineBlack]);
 
   const opponentName = useMemo(() => {
     if (!gameData) return 'Opponent';
@@ -1522,12 +1502,12 @@ export default function App() {
     }
   };
 
-  const calculateElo = (playerRating, opponentRating, score, kFactor = 32) => {
+  function calculateElo(playerRating, opponentRating, score, kFactor = 32) {
     const expected = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
     return Math.round(playerRating + kFactor * (score - expected));
-  };
+  }
 
-  const handleTimeout = async (losingColor) => {
+  async function handleTimeout(losingColor) {
     if (!gameId || !db || !gameData) return;
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     try {
@@ -1570,7 +1550,7 @@ export default function App() {
     } catch (err) {
       console.error('Timeout error:', err);
     }
-  };
+  }
 
   const handleChallengeFriend = async (friendUid, friendName) => {
     if (!user || !firebaseEnabled || !db) return;
