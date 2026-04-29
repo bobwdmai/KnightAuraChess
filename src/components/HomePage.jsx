@@ -14,6 +14,25 @@ function formatRecentDate(timestamp) {
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
+function getMoveCount(game) {
+  const history = game?.moveHistory;
+  if (Array.isArray(history)) return history.length;
+  if (typeof history === 'string') {
+    return history.split(/\s+/).filter(Boolean).length;
+  }
+  return null;
+}
+
+function getTimeControl(game) {
+  const tc = game?.timeControl;
+  if (!tc) return null;
+  if (typeof tc === 'string') return tc;
+  const minutes = Number(tc.minutes ?? tc.initial ?? 0);
+  const increment = Number(tc.increment ?? tc.inc ?? 0);
+  if (!minutes && !increment) return null;
+  return `${minutes}+${increment}`;
+}
+
 function getGameSummary(game, userId) {
   const isWhite = game.whiteId === userId;
   const opponentName = isWhite
@@ -40,6 +59,52 @@ function getGameSummary(game, userId) {
     className: userWon ? 'win' : 'loss',
     opponentName,
   };
+}
+
+function HomeAuraDiagram() {
+  const SIZE = 6;
+  const KR = 3;
+  const KC = 2;
+  const cells = useMemo(() => {
+    const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+    for (const [dr, dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) {
+      const r = KR + dr;
+      const c = KC + dc;
+      if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) grid[r][c] = { hl: 'adj' };
+    }
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) {
+      const r = KR + dr;
+      const c = KC + dc;
+      if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) grid[r][c] = { hl: 'knm' };
+    }
+    grid[KR][KC] = { piece: '♘', hl: 'source' };
+    grid[2][2] = { piece: '♖', hl: 'adj' };
+    grid[3][3] = { piece: '♗', hl: 'adj' };
+    grid[1][1] = { piece: '♕', hl: 'knm' };
+    return grid;
+  }, []);
+
+  return (
+    <div className="home-aura-diagram" aria-hidden="true">
+      {cells.map((row, r) => (
+        <div key={r} className="home-aura-diagram__row">
+          {row.map((cell, c) => {
+            const light = (r + c) % 2 === 0;
+            const cls = [
+              'home-aura-diagram__cell',
+              light ? 'is-light' : 'is-dark',
+              cell?.hl ? `is-${cell.hl}` : '',
+            ].filter(Boolean).join(' ');
+            return (
+              <div key={c} className={cls}>
+                {cell?.piece && <span className="home-aura-diagram__piece">{cell.piece}</span>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function SignedInHomePanel({
@@ -113,14 +178,23 @@ function SignedInHomePanel({
     draws: profile?.draws ?? 0,
   }), [profile]);
 
+  const displayName = profile?.displayName || user.email || 'Player';
+  const handle = profile?.handle || profile?.username;
+  const firstName = displayName.split(/[\s@]/)[0];
+
   return (
     <>
       <section className="home-hero home-hero--signed-in">
         <div className="home-hero-copy">
-          <span className="home-kicker">Signed In</span>
-          <h2>Pick up the board fast, then get back to live play.</h2>
+          <span className="home-hero-eyebrow">Welcome back, {firstName}</span>
+          <h2>
+            Pick up the board fast.
+            <br />
+            <em>Live play is one click away.</em>
+          </h2>
           <p className="home-summary">
-            Your rating, record, and recent results are ready. Start a board, open your account, or review the rule twist before your next match.
+            Your rating, record, and recent results are ready. Start a board, open your account, or
+            refresh the aura rule before your next match.
           </p>
           <div className="home-actions">
             <button className="btn btn-primary home-cta" onClick={onPlay}>
@@ -133,20 +207,22 @@ function SignedInHomePanel({
               How It Works
             </button>
           </div>
-          <p className="home-note">
+          <div className="home-hero-status">
+            <span className={`home-dot ${firebaseEnabled ? 'is-on' : 'is-off'}`} aria-hidden="true" />
             {firebaseEnabled
-              ? 'Signed-in play keeps your rating, unlocks ranked games, and lets you answer live challenges.'
-              : 'Firebase is off right now, so account features are limited to local profile data.'}
-          </p>
+              ? 'Online · ranked play and live challenges enabled'
+              : 'Offline · Firebase is off, local play only'}
+          </div>
         </div>
 
         <aside className="home-hero-card home-account-card">
           <div className="home-account-card__header">
             <div>
               <p className="home-card-label">Account</p>
-              <h3>{profile?.displayName || user.email || 'Player'}</h3>
+              <h3>{displayName}</h3>
+              {handle && <span className="home-account-handle">@{handle}</span>}
             </div>
-            <div className="home-rating-pill">{rating} Elo</div>
+            <div className="home-rating-pill home-rating-pill--big">{rating} Elo</div>
           </div>
 
           <div className="home-record-grid">
@@ -187,22 +263,46 @@ function SignedInHomePanel({
         </aside>
       </section>
 
+      <section className="home-aura-strip">
+        <div className="home-aura-strip__diagram">
+          <HomeAuraDiagram />
+        </div>
+        <div className="home-aura-strip__copy">
+          <p className="home-card-label">Knight-Aura · the rule in one line</p>
+          <h3>Friendly knights cast an aura. Pieces in it can jump one blocker.</h3>
+          <p>
+            Standard chess everywhere else. Brush up on aura squares, the one-jump limit, and pawn
+            edge cases before your next ranked match.
+          </p>
+          <button className="btn btn-primary home-aura-strip__cta" onClick={onHowItWorks}>
+            Open the Learn page →
+          </button>
+        </div>
+      </section>
+
       <section className="home-dashboard">
         <article className="home-panel">
-          <div className="home-panel__header">
+          <header className="home-panel__header">
             <div>
               <p className="home-card-label">Recent Games</p>
-              <h3>Resume with context</h3>
+              <h3>You vs the world</h3>
             </div>
-          </div>
+          </header>
           {loadingRecentGames ? (
-            <p className="muted">Loading recent games...</p>
+            <p className="home-panel__muted">Loading recent games…</p>
           ) : recentGames.length === 0 ? (
-            <p className="muted">No finished games yet. Your first result will show up here.</p>
+            <p className="home-panel__muted">No finished games yet. Your first result will show up here.</p>
           ) : (
             <div className="home-recent-list">
               {recentGames.map((game) => {
                 const summary = getGameSummary(game, user.uid);
+                const moves = getMoveCount(game);
+                const tc = getTimeControl(game);
+                const meta = [
+                  formatRecentDate(game.updatedAt),
+                  moves != null ? `${moves} moves` : null,
+                  tc,
+                ].filter(Boolean).join(' · ');
                 return (
                   <div key={game.id} className="home-recent-row">
                     <span className={`home-recent-result home-recent-result--${summary.className}`}>
@@ -210,7 +310,7 @@ function SignedInHomePanel({
                     </span>
                     <div className="home-recent-copy">
                       <strong>vs {summary.opponentName}</strong>
-                      <span>{formatRecentDate(game.updatedAt)}</span>
+                      <span>{meta}</span>
                     </div>
                   </div>
                 );
@@ -220,40 +320,74 @@ function SignedInHomePanel({
         </article>
 
         <article className="home-panel">
-          <div className="home-panel__header">
+          <header className="home-panel__header">
             <div>
               <p className="home-card-label">Next Step</p>
               <h3>Choose a lane</h3>
             </div>
-          </div>
+          </header>
           <div className="home-lane-list">
-            <div className="home-lane-item">
-              <strong>Play</strong>
-              <span>Launch local, AI, or online play without going through sign-in again.</span>
-            </div>
-            <div className="home-lane-item">
-              <strong>Account</strong>
-              <span>Open your profile to edit your card, review your record, and message other players.</span>
-            </div>
-            <div className="home-lane-item">
-              <strong>Tutorials</strong>
-              <span>Refresh aura rules and promotion edge cases before jumping into a rated game.</span>
-            </div>
+            <button type="button" className="home-lane" onClick={onPlay} aria-label="Launch a board">
+              <span className="home-lane__mark">P</span>
+              <span className="home-lane__body">
+                <strong>Play</strong>
+                <span>Launch local, AI, or online without re-auth.</span>
+              </span>
+              <span className="home-lane__arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" className="home-lane" onClick={onOpenAccount} aria-label="Open your profile hub">
+              <span className="home-lane__mark">A</span>
+              <span className="home-lane__body">
+                <strong>Account</strong>
+                <span>Edit your card, review your record, message players.</span>
+              </span>
+              <span className="home-lane__arrow" aria-hidden="true">→</span>
+            </button>
+            <button type="button" className="home-lane" onClick={onHowItWorks} aria-label="Read the Learn page">
+              <span className="home-lane__mark">L</span>
+              <span className="home-lane__body">
+                <strong>Learn</strong>
+                <span>Aura squares, one-jump limits, and pawn edge cases.</span>
+              </span>
+              <span className="home-lane__arrow" aria-hidden="true">→</span>
+            </button>
           </div>
         </article>
       </section>
+
+      <footer className="home-outro">
+        <div className="home-outro__text">
+          Built around one rule change. <strong>Everything else is chess.</strong>
+        </div>
+        <div className="home-outro__actions">
+          <button className="btn btn-ghost" onClick={onHowItWorks}>Learn the rule</button>
+          <button className="btn btn-primary" onClick={onPlay}>Start a game →</button>
+        </div>
+      </footer>
     </>
   );
 }
 
-function SignedOutHomePanel({ firebaseEnabled, onPlayGuest, onSignIn, onHowItWorks, primaryActionLabel = 'Play as Guest' }) {
+function SignedOutHomePanel({
+  firebaseEnabled,
+  onPlayGuest,
+  onSignIn,
+  onHowItWorks,
+  primaryActionLabel = 'Play as Guest',
+}) {
   return (
     <>
       <section className="home-hero">
         <div className="home-hero-copy">
-          <h2>Knight aura turns nearby pieces into jump-capable attackers.</h2>
+          <span className="home-hero-eyebrow">A chess variant in one rule</span>
+          <h2>
+            Friendly knights cast an <em>aura</em>.
+            <br />
+            Pieces in it can <em>jump one blocker</em>.
+          </h2>
           <p className="home-summary">
-            Start a guest board instantly, sign in for live play, or learn the rule twist before you sit down.
+            Standard chess movement everywhere else. Start a guest board instantly, sign in for live
+            play, or learn the rule twist before you sit down.
           </p>
           <div className="home-actions">
             <button className="btn btn-primary home-cta" onClick={onPlayGuest}>
@@ -266,28 +400,50 @@ function SignedOutHomePanel({ firebaseEnabled, onPlayGuest, onSignIn, onHowItWor
               How It Works
             </button>
           </div>
-          <p className="home-note">
+          <div className="home-hero-status">
+            <span className={`home-dot ${firebaseEnabled ? 'is-on' : 'is-off'}`} aria-hidden="true" />
             {firebaseEnabled
-              ? 'Guest play is local. Sign in unlocks online matches, rankings, and chat.'
-              : 'Firebase is off right now, so guest practice is the available mode.'}
-          </p>
+              ? 'Guest play is local · sign in for ranked + online'
+              : 'Firebase is off · guest practice is the only mode right now'}
+          </div>
+        </div>
+        <div className="home-hero-art">
+          <HomeAuraDiagram />
         </div>
       </section>
 
       <section className="home-highlights">
         <article className="home-highlight">
+          <div className="home-highlight__mark" aria-hidden="true">▶</div>
           <h3>Play as Guest</h3>
-          <p>Launch straight into a local board with clocks, AI support, and polished board-view options.</p>
+          <p>Launch straight into a local board with clocks, AI, and polished board options. No account needed.</p>
+          <span className="home-highlight__hint">Start board →</span>
         </article>
         <article className="home-highlight">
+          <div className="home-highlight__mark" aria-hidden="true">↗</div>
           <h3>Sign In</h3>
-          <p>Use Google, email, or guest auth to keep a rating, social graph, and live-game history.</p>
+          <p>Google, email, or guest auth — keep a rating, social graph, and live-game history.</p>
+          <span className="home-highlight__hint">Continue →</span>
         </article>
         <article className="home-highlight">
-          <h3>How It Works</h3>
-          <p>Learn aura squares, one-jump limits, and pawn edge cases before starting your first match.</p>
+          <div className="home-highlight__mark" aria-hidden="true">?</div>
+          <h3>Learn the twist</h3>
+          <p>Aura squares, one-jump limits, and pawn edge cases — all in a 3-minute interactive page.</p>
+          <span className="home-highlight__hint">Open Learn page →</span>
         </article>
       </section>
+
+      <footer className="home-outro">
+        <div className="home-outro__text">
+          Built around one rule change. <strong>Everything else is chess.</strong>
+        </div>
+        <div className="home-outro__actions">
+          <button className="btn btn-ghost" onClick={onHowItWorks}>Learn the rule</button>
+          <button className="btn btn-primary" onClick={onPlayGuest} aria-label="Start a guest board">
+            Start a game →
+          </button>
+        </div>
+      </footer>
     </>
   );
 }
