@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import './LearnPage.css';
 
 function buildAuraGrid() {
@@ -24,666 +24,282 @@ function buildAuraGrid() {
 
 const auraGrid = buildAuraGrid();
 
-function getCellAriaLabel(cell, rowIndex, cellIndex) {
-  if (cell === '○') return `target square ${rowIndex + 1}-${cellIndex + 1}`;
-  if (cell === '→') return `path square ${rowIndex + 1}-${cellIndex + 1}`;
-  return `board square ${rowIndex + 1}-${cellIndex + 1}`;
-}
-
-const interactiveLessons = [
+const ruleMapSections = [
   {
-    title: 'Aura Builder',
-    tag: 'Basics',
-    goal: 'Learn which squares gain jumping power from a knight.',
-    steps: [
-      {
-        title: 'Center the knight',
-        note: 'A central knight spreads the widest useful aura.',
-        board: [
-          ['','','','','','',''],
-          ['','','','','','',''],
-          ['','','','','','',''],
-          ['','','','♞','','',''],
-          ['','','','','','',''],
-          ['','','','','','',''],
-          ['','','','','','',''],
+    number: '1',
+    tone: 'green',
+    title: 'Aura Source',
+    subtitle: 'Knights create the rule twist.',
+    copy: 'A knight projects aura to nearby friendly pieces. The knight is the source; the pieces around it are the ones that gain the jump.',
+    diagram: {
+      rows: [
+        [
+          { text: '♗', kind: 'empowered', label: 'empowered bishop on touching corner' },
+          { text: '♖', kind: 'empowered', label: 'empowered rook' },
+          { text: '♕', kind: 'empowered', label: 'empowered queen on touching corner' },
         ],
-      },
-      {
-        title: 'Adjacent allies are empowered',
-        note: 'Every square touching the knight is inside the aura.',
-        board: [
-          ['','','','','','',''],
-          ['','','','','','',''],
-          ['','','★','★','★','',''],
-          ['','','★','♞','★','',''],
-          ['','','★','★','★','',''],
-          ['','','','','','',''],
-          ['','','','','','',''],
+        [
+          { text: '♙', kind: 'empowered', label: 'empowered pawn' },
+          { text: '♘', kind: 'source', label: 'aura source knight' },
+          { text: '♔', kind: 'empowered', label: 'empowered king' },
         ],
-      },
-      {
-        title: 'Knight jumps count too',
-        note: 'L-shaped reach also grants the aura, for up to 16 empowered squares total.',
-        board: [
-          ['','','','','','',''],
-          ['','','✦','','✦','',''],
-          ['','✦','★','★','★','✦',''],
-          ['','','★','♞','★','',''],
-          ['','✦','★','★','★','✦',''],
-          ['','','✦','','✦','',''],
-          ['','','','','','',''],
+        [
+          { text: '♙', kind: 'empowered', label: 'empowered pawn on touching corner' },
+          { text: '♗', kind: 'empowered', label: 'empowered bishop' },
+          { text: '♖', kind: 'empowered', label: 'empowered rook on touching corner' },
         ],
-      },
-    ],
+      ],
+      note: 'All 8 touching squares are aura squares, including the corners.',
+    },
   },
   {
-    title: 'Single Jump',
-    tag: 'Movement',
-    goal: 'See how one blocker can be cleared and the line stays open afterward.',
-    steps: [
-      {
-        title: 'The blocker appears',
-        note: 'The rook cannot normally pass the pawn.',
-        board: [
-          ['♖','','♟','','','♝'],
-        ],
-      },
-      {
-        title: 'Aura lets it jump once',
-        note: 'The rook clears exactly one blocker and keeps moving.',
-        challenge: {
-          prompt: 'Click the landing square behind the blocker.',
-          target: [0, 4],
-          success: 'Correct. That is the first legal square beyond the blocker.',
-        },
-        board: [
-          ['♖','→','♟','→','○','♝'],
-        ],
-      },
-      {
-        title: 'Capture becomes possible',
-        note: 'After the jump, the rook may stop on an empty square or capture the bishop.',
-        board: [
-          ['','', '♟', '', '○', '♖'],
-        ],
-      },
-    ],
+    number: '2',
+    tone: 'blue',
+    title: 'Empowered Squares',
+    subtitle: 'Touch the knight, or sit where the knight could jump.',
+    copy: 'A friendly piece is empowered if it touches your knight or sits on a square your knight could jump to.',
+    diagram: 'aura',
   },
   {
-    title: 'Second Blocker',
-    tag: 'Limits',
-    goal: 'Understand why the second piece still stops the move.',
-    steps: [
-      {
-        title: 'Two blockers in line',
-        note: 'Only the first blocker may be cleared.',
-        board: [
-          ['♕','','♟','','♜','',''],
+    number: '3',
+    tone: 'green',
+    title: 'Legal Jump',
+    subtitle: 'Move normally, then clear the first blocker.',
+    copy: 'An empowered piece moves on its normal line, but may clear the first blocker on that path and land beyond it.',
+    diagram: {
+      rows: [
+        [
+          { text: '♘', kind: 'source', label: 'aura source knight' },
+          { text: '♖', kind: 'empowered', label: 'empowered rook' },
+          { text: '→', kind: 'path', label: 'movement path' },
+          { text: '♟', kind: 'blocker', label: 'blocker' },
+          { text: '○', kind: 'legal', label: 'legal landing square' },
+          { text: '♝', kind: 'legal', label: 'legal capture square' },
         ],
-      },
-      {
-        title: 'The queen clears one piece',
-        note: 'The aura pays for one jump only.',
-        board: [
-          ['♕','→','♟','→','♜','✗',''],
-        ],
-      },
-      {
-        title: 'The second blocker holds',
-        note: 'The queen must stop before the rook and cannot pass through it.',
-        board: [
-          ['','','♟','♕','♜','',''],
-        ],
-      },
-    ],
+      ],
+      note: 'The rook is empowered, clears one blocker, then may stop or capture beyond it.',
+    },
   },
   {
-    title: 'Pawn Breakthrough',
-    tag: 'Practical',
-    goal: 'Use aura pawns to crack files open earlier than normal chess allows.',
-    steps: [
+    number: '4',
+    tone: 'red',
+    title: 'Hard Limits',
+    subtitle: 'Aura changes movement, not every chess rule.',
+    copy: 'Only one blocker can be jumped. Pawns do not capture straight forward, but aura can create diagonal jump captures.',
+    diagram: [
       {
-        title: 'Pawn with support',
-        note: 'The knight empowers the pawn from behind.',
-        board: [
-          ['','','','○','',''],
-          ['','','','♟','',''],
-          ['','','','♙','',''],
-          ['','','','♞','',''],
+        title: 'One jump only',
+        rows: [
+          [
+            { text: '♘', kind: 'source', label: 'aura source knight' },
+            { text: '♕', kind: 'empowered', label: 'empowered queen' },
+            { text: '→', kind: 'path', label: 'movement path' },
+            { text: '♟', kind: 'blocker', label: 'first blocker' },
+            { text: '○', kind: 'legal', label: 'legal landing square after first blocker' },
+            { text: '♟', kind: 'blocker', label: 'second blocker' },
+            { text: '✕', kind: 'illegal', label: 'illegal square beyond second blocker' },
+          ],
         ],
+        note: 'After clearing the first blocker, the next occupied square stops the line.',
       },
       {
-        title: 'The pawn jumps the blocker',
-        note: 'A pawn in the aura can leap one blocker straight ahead only to an empty square. It still cannot capture by jumping straight forward.',
-        challenge: {
-          prompt: 'Click the empty square the pawn may jump to.',
-          target: [0, 3],
-          success: 'Correct. The pawn jumps forward only if the landing square is empty.',
-        },
-        board: [
-          ['','','','♙','',''],
-          ['','','','♟','',''],
-          ['','','','','',''],
-          ['','','','♞','',''],
+        title: 'Pawn landing rule',
+        kind: 'pawn-grid',
+        cases: [
+          {
+            caption: 'Forward jump · empty landing',
+            verdict: 'legal',
+            grid: [
+              [{ kind: 'land-legal', text: '○', label: 'empty landing square' }, null, null],
+              [{ kind: 'blocker', text: '♟', label: 'blocker jumped over' }, null, null],
+              [{ kind: 'pawn', text: '♙', label: 'empowered pawn' }, null, null],
+            ],
+          },
+          {
+            caption: 'Forward jump · onto a piece',
+            verdict: 'illegal',
+            grid: [
+              [{ kind: 'land-illegal', text: '♜', label: 'illegal forward capture' }, null, null],
+              [{ kind: 'blocker', text: '♟', label: 'blocker jumped over' }, null, null],
+              [{ kind: 'pawn', text: '♙', label: 'empowered pawn' }, null, null],
+            ],
+          },
+          {
+            caption: 'Diagonal jump · capture black rook',
+            verdict: 'legal',
+            grid: [
+              [null, null, { kind: 'capture', text: '♜', label: 'black rook captured diagonally' }],
+              [null, { kind: 'blocker', text: '♝', label: 'black bishop jumped over diagonally' }, null],
+              [{ kind: 'pawn', text: '♙', label: 'empowered pawn' }, null, null],
+            ],
+          },
         ],
-      },
-      {
-        title: 'The file opens',
-        note: 'This often unlocks a rook or queen attack immediately.',
-        board: [
-          ['','','','♙','',''],
-          ['','','','','',''],
-          ['','','','','',''],
-          ['','','','♞','',''],
-        ],
-      },
-    ],
-  },
-  {
-    title: 'King Escape',
-    tag: 'Defense',
-    goal: 'Use an empowered king to slip over a blocker when one safe square opens.',
-    steps: [
-      {
-        title: 'Crowded shelter',
-        note: 'The king looks boxed in by its own piece.',
-        board: [
-          ['','','','',''],
-          ['','♜','','',''],
-          ['','♙','♔','',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
-      },
-      {
-        title: 'Aura opens a jump',
-        note: 'The king may clear one blocker if the landing square is still safe.',
-        challenge: {
-          prompt: 'Click the safe landing square for the king.',
-          target: [1, 2],
-          success: 'Correct. The king may jump only if the destination stays legal.',
-        },
-        board: [
-          ['','','','',''],
-          ['','♜','○','',''],
-          ['','♙','♔','→',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
-      },
-      {
-        title: 'Safety still matters',
-        note: 'Aura never lets the king jump into check, so the landing square must remain legal.',
-        board: [
-          ['','','','',''],
-          ['','♜','♔','',''],
-          ['','♙','','',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Bishop Strike',
-    tag: 'Attack',
-    goal: 'Use a diagonal jump to attack through a blocked long line.',
-    steps: [
-      {
-        title: 'Diagonal is clogged',
-        note: 'The bishop cannot reach the target while the pawn blocks the lane.',
-        board: [
-          ['♝','','','','',''],
-          ['','♟','','','',''],
-          ['','','','','',''],
-          ['','','','','',''],
-          ['','','','','♜',''],
-          ['','','','','',''],
-        ],
-      },
-      {
-        title: 'Aura keeps the diagonal alive',
-        note: 'One blocker may be cleared and the bishop can continue sliding.',
-        challenge: {
-          prompt: 'Click the first legal landing square beyond the blocker.',
-          target: [3, 3],
-          success: 'Correct. The bishop clears one blocker and resumes its diagonal.',
-        },
-        board: [
-          ['♝','','','','',''],
-          ['','♟','','','',''],
-          ['','','→','','',''],
-          ['','','','○','',''],
-          ['','','','','♜',''],
-          ['','','','','',''],
-        ],
-      },
-      {
-        title: 'Capture lands deep',
-        note: 'Long-range pieces become much sharper once the first blocker is ignored.',
-        board: [
-          ['','','','','',''],
-          ['','♟','','','',''],
-          ['','','','','',''],
-          ['','','','','',''],
-          ['','','','','♝',''],
-          ['','','','','',''],
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Fork Setup',
-    tag: 'Tactics',
-    goal: 'Use aura movement to create a fork that would not exist in normal chess.',
-    steps: [
-      {
-        title: 'Knight support behind the rook',
-        note: 'The rook is ready to jump the blocker and invade.',
-        board: [
-          ['♜','','','','♛',''],
-          ['♟','','','','',''],
-          ['♖','','','','♚',''],
-          ['♞','','','','',''],
-        ],
-      },
-      {
-        title: 'The rook clears the file',
-        note: 'One jump puts the rook onto a square with multiple threats.',
-        challenge: {
-          prompt: 'Click the invasion square that creates the fork.',
-          target: [2, 2],
-          success: 'Correct. That jump creates pressure on both targets.',
-        },
-        board: [
-          ['♜','','','','♛',''],
-          ['♟','','','','',''],
-          ['♖','→','○','','♚',''],
-          ['♞','','','','',''],
-        ],
-      },
-      {
-        title: 'Forked targets',
-        note: 'The leap creates pressure on both the queen and king-side squares at once.',
-        board: [
-          ['♜','','','','♛',''],
-          ['♟','','','','',''],
-          ['','','♖','','♚',''],
-          ['♞','','','','',''],
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Promotion Jump',
-    tag: 'Endgame',
-    goal: 'See how aura promotion keeps all four promotion choices open.',
-    steps: [
-      {
-        title: 'The pawn is blocked',
-        note: 'Normally this pawn would stall one rank before promotion.',
-        board: [
-          ['','','♟','',''],
-          ['','','♙','',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
-      },
-      {
-        title: 'Aura clears the last blocker',
-        note: 'The pawn may jump forward to an empty promotion square.',
-        challenge: {
-          prompt: 'Click the promotion square the pawn can jump to.',
-          target: [0, 2],
-          success: 'Correct. The pawn can jump into promotion when the landing square is empty.',
-        },
-        board: [
-          ['','','○','',''],
-          ['','','♙','',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
-      },
-      {
-        title: 'Choose the piece',
-        note: 'The jump does not force a queen. Rook, bishop, queen, and knight remain legal promotions.',
-        board: [
-          ['','','♕','',''],
-          ['','','','',''],
-          ['','♞','','',''],
-          ['','','','',''],
-        ],
+        note: 'Forward pawn jumps require an empty landing square. Captures still happen diagonally.',
       },
     ],
   },
 ];
 
-function InteractiveTutorials() {
-  const [activeLesson, setActiveLesson] = useState(0);
-  const [activeStep, setActiveStep] = useState(0);
-  const [stepSolved, setStepSolved] = useState(false);
-  const [stepFeedback, setStepFeedback] = useState('');
-
-  const lesson = interactiveLessons[activeLesson];
-  const step = lesson.steps[activeStep];
-
-  const canGoPrev = activeStep > 0;
-  const canGoNext = activeStep < lesson.steps.length - 1 && (!step.challenge || stepSolved);
-
-  const progressLabel = useMemo(
-    () => `${activeStep + 1} / ${lesson.steps.length}`,
-    [activeStep, lesson.steps.length]
-  );
-
-  const resetStepState = (nextStep = 0) => {
-    setActiveStep(nextStep);
-    setStepSolved(false);
-    setStepFeedback('');
-  };
-
-  const handleLessonChange = (index) => {
-    setActiveLesson(index);
-    setStepSolved(false);
-    setStepFeedback('');
-    setActiveStep(0);
-  };
-
-  const handleBoardClick = (rowIndex, cellIndex) => {
-    if (!step.challenge) return;
-    const [targetRow, targetCell] = step.challenge.target;
-    if (rowIndex === targetRow && cellIndex === targetCell) {
-      setStepSolved(true);
-      setStepFeedback(step.challenge.success);
-      return;
-    }
-    setStepFeedback('Not that square. Follow the move rule and try again.');
-  };
-
-  return (
-    <section className="learn-tutorials learn-tutorials--interactive">
-      <h3>Interactive Tutorials</h3>
-      <p className="learn-tutorials-intro">
-        Click through each lesson to watch the position change step by step.
-      </p>
-
-      <div className="learn-lesson-tabs">
-        {interactiveLessons.map((item, index) => (
-          <button
-            key={item.title}
-            className={`learn-lesson-tab${index === activeLesson ? ' active' : ''}`}
-            onClick={() => handleLessonChange(index)}
-          >
-            <span className="learn-lesson-tab-tag">{item.tag}</span>
-            <span>{item.title}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="learn-interactive-card">
-        <div className="learn-interactive-copy">
-          <div className="learn-interactive-header">
-            <span className="learn-tutorial-tag">{lesson.tag}</span>
-            <span className="learn-step-counter">{progressLabel}</span>
-          </div>
-          <h4>{lesson.title}</h4>
-          <p className="learn-interactive-goal">{lesson.goal}</p>
-          <div className="learn-step-card">
-            <strong>{step.title}</strong>
-            <p>{step.note}</p>
-            {step.challenge && (
-              <div className="learn-step-challenge">
-                <span>{step.challenge.prompt}</span>
-                {stepFeedback && (
-                  <strong className={stepSolved ? 'learn-step-challenge--success' : 'learn-step-challenge--error'}>
-                    {stepFeedback}
-                  </strong>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="learn-interactive-actions">
-            <button className="btn btn-ghost" onClick={() => resetStepState(0)}>Reset</button>
-            <button className="btn btn-ghost" onClick={() => canGoPrev && resetStepState(activeStep - 1)} disabled={!canGoPrev}>
-              Previous
-            </button>
-            <button className="btn btn-primary" onClick={() => canGoNext && resetStepState(activeStep + 1)} disabled={!canGoNext}>
-              Next
-            </button>
-          </div>
-        </div>
-
-        <div className="learn-demo-board" aria-label={`${lesson.title} demo`}>
-          {step.board.map((row, rowIndex) => (
-            <div key={rowIndex} className="learn-demo-row">
-              {row.map((cell, cellIndex) => {
-                const dark = (rowIndex + cellIndex) % 2 === 1;
-                const isChallengeTarget = step.challenge?.target?.[0] === rowIndex && step.challenge?.target?.[1] === cellIndex;
-                return (
-                  <button
-                    key={`${rowIndex}-${cellIndex}`}
-                    type="button"
-                    aria-label={getCellAriaLabel(cell, rowIndex, cellIndex)}
-                    className={`learn-demo-cell${dark ? ' learn-demo-cell--dark' : ' learn-demo-cell--light'}${cell === '○' ? ' learn-demo-cell--target' : ''}${cell === '→' ? ' learn-demo-cell--path' : ''}${step.challenge ? ' learn-demo-cell--clickable' : ''}${isChallengeTarget ? ' learn-demo-cell--challenge' : ''}${stepSolved && isChallengeTarget ? ' learn-demo-cell--challenge-solved' : ''}`}
-                    onClick={() => handleBoardClick(rowIndex, cellIndex)}
-                    disabled={!step.challenge}
-                  >
-                    {cell === '○' ? '' : cell}
-                  </button>
-                );
+function LearnDiagram({ diagram }) {
+  if (diagram === 'aura') {
+    return (
+      <div className="learn-aura-grid-wrapper">
+        <div className="learn-aura-grid" aria-label="Empowered aura squares diagram">
+          {auraGrid.map((row, ri) => (
+            <div key={ri} className="learn-aura-row">
+              {row.map((cell, ci) => {
+                let cls = 'learn-aura-cell';
+                let content = '';
+                if (cell === 'N') {
+                  cls += ' learn-aura-cell--knight';
+                  content = '♘';
+                } else if (cell === 'adj') {
+                  cls += ' learn-aura-cell--adjacent';
+                  content = '★';
+                } else if (cell === 'knight') {
+                  cls += ' learn-aura-cell--knight-move';
+                  content = '✦';
+                }
+                return <div key={ci} className={cls}>{content}</div>;
               })}
             </div>
           ))}
         </div>
+        <div className="learn-aura-legend">
+          <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--knight">♘</span> Aura source</span>
+          <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--adj">★</span> Adjacent</span>
+          <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--knm">✦</span> Knight-move square</span>
+        </div>
+      </div>
+    );
+  }
+
+  const diagrams = Array.isArray(diagram) ? diagram : [diagram];
+
+  return (
+    <div className={diagrams.length > 1 ? 'learn-rule-diagram-list' : 'learn-rule-diagram'}>
+      {diagrams.map((item) => (
+        <div key={item.title || item.note} className="learn-rule-diagram">
+          {item.title && <strong className="learn-rule-diagram-title">{item.title}</strong>}
+          {item.kind === 'pawn-grid' ? (
+            <div className="learn-pawn-cases" aria-label={item.note}>
+              {item.cases.map((c) => (
+                <div
+                  key={c.caption}
+                  className={`learn-pawn-case learn-pawn-case--${c.verdict}`}
+                >
+                  <div className="learn-pawn-grid">
+                    {c.grid.map((row, ri) => (
+                      <div key={ri} className="learn-pawn-grid-row">
+                        {row.map((cell, ci) => (
+                          <div
+                            key={`${ri}-${ci}`}
+                            className={`learn-pawn-cell${cell ? ` learn-pawn-cell--${cell.kind}` : ''}`}
+                            aria-label={cell?.label || 'empty square'}
+                          >
+                            {cell?.text || ''}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <span className={`learn-pawn-verdict learn-pawn-verdict--${c.verdict}`}>
+                    {c.verdict === 'legal' ? '✓' : '✕'} {c.caption}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="learn-rule-board" aria-label={item.note}>
+              {item.rows.map((row, rowIndex) => (
+                <div key={rowIndex} className="learn-rule-row">
+                  {row.map((cell, cellIndex) => (
+                    <div
+                      key={`${rowIndex}-${cellIndex}`}
+                      className={`learn-rule-cell learn-rule-cell--${cell.kind}`}
+                      aria-label={cell.label || 'empty square'}
+                    >
+                      {cell.text}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          <p>{item.note}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RuleMapSection({ section }) {
+  return (
+    <section className={`learn-section learn-section--${section.tone}`}>
+      <div className="learn-section-badge">{section.number}</div>
+      <div className="learn-section-body">
+        <h3>{section.title}</h3>
+        <p className="learn-section-subtitle">{section.subtitle}</p>
+        <p>{section.copy}</p>
+        <LearnDiagram diagram={section.diagram} />
       </div>
     </section>
   );
 }
 
-export default function LearnPage({ onBack, onOpenTutorials, tutorialsOnly = false }) {
+export default function LearnPage({ onBack }) {
   return (
     <div className="learn-page">
       <header className="learn-page-header">
         <button className="learn-back-btn" onClick={onBack}>
-          {tutorialsOnly ? '← Back to Learn' : '← Back to Game'}
+          ← Back to Game
         </button>
         <div className="learn-page-title">
-          <h1>{tutorialsOnly ? '♞ Knight-Aura Tutorials' : '♞ How to Play Knight-Aura Chess'}</h1>
-          <p>{tutorialsOnly ? 'Step through live lessons for the horse-powered ruleset' : 'Standard chess — supercharged by the power of the horse'}</p>
+          <h1>♘ How to Play Knight-Aura Chess</h1>
+          <p>One guide for aura squares, legal jumps, and movement limits</p>
         </div>
       </header>
 
-      {tutorialsOnly ? (
-        <>
-          <section className="learn-hero learn-hero--tutorials">
-            <div className="learn-hero-text">
-              <h2>Interactive Tutorials</h2>
-              <p>
-                Work through focused examples for aura control, blocker jumps, and pawn breakthroughs.
-              </p>
-            </div>
-          </section>
-          <InteractiveTutorials />
-        </>
-      ) : (
-        <>
-          <section className="learn-hero">
-            <div className="learn-hero-text">
-              <h2>Unleash the Power of the Horse</h2>
-              <p>
-                In conventional chess, only the knight can jump over other pieces.
-                In <strong>Knight-Aura Chess</strong>, that jumping power radiates outward —
-                any friendly piece within the knight&apos;s aura can <strong>leap over one blocker</strong>.
-              </p>
-            </div>
-          </section>
+      <section className="learn-hero">
+        <div className="learn-hero-text">
+          <h2>Learn the one rule twist, then practice it</h2>
+          <p>
+            White knights empower nearby white pieces to <strong>jump one blocker</strong>.
+            Black pieces in these examples are blockers or targets. Use the rule map below
+            as the complete reference for legal aura movement.
+          </p>
+        </div>
+      </section>
 
-          <section className="learn-section learn-section--green">
-            <div className="learn-section-badge">1</div>
-            <div className="learn-section-body">
-              <h3>The Knight&apos;s Aura Zone</h3>
-              <p className="learn-section-subtitle">Ride close to the horse, gain its power</p>
-              <p>
-                Any friendly piece that is adjacent to a knight or reachable by its L-shaped jump
-                is inside the aura and may jump one blocker.
-              </p>
+      <div className="learn-rule-map" aria-label="Knight-Aura rule map">
+        {ruleMapSections.map((section) => (
+          <RuleMapSection key={section.title} section={section} />
+        ))}
+      </div>
 
-              <div className="learn-aura-grid-wrapper">
-                <div className="learn-aura-grid">
-                  {auraGrid.map((row, ri) => (
-                    <div key={ri} className="learn-aura-row">
-                      {row.map((cell, ci) => {
-                        let cls = 'learn-aura-cell';
-                        let content = '';
-                        if (cell === 'N') {
-                          cls += ' learn-aura-cell--knight';
-                          content = '♞';
-                        } else if (cell === 'adj') {
-                          cls += ' learn-aura-cell--adjacent';
-                          content = '★';
-                        } else if (cell === 'knight') {
-                          cls += ' learn-aura-cell--knight-move';
-                          content = '✦';
-                        }
-                        return <div key={ci} className={cls}>{content}</div>;
-                      })}
-                    </div>
-                  ))}
-                </div>
-                <div className="learn-aura-legend">
-                  <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--knight">♞</span> Knight</span>
-                  <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--adj">★</span> Adjacent</span>
-                  <span className="learn-legend-item"><span className="learn-legend-swatch learn-legend--knm">✦</span> Knight Move</span>
-                </div>
-              </div>
-
-              <div className="learn-aura-indicator">
-                <div className="learn-aura-indicator-piece" aria-hidden="true">
-                  ♖
-                  <span className="learn-aura-indicator-mark">✦</span>
-                </div>
-                <div className="learn-aura-indicator-copy">
-                  <strong>Board indicator</strong>
-                  <p>
-                    On the live board, an empowered piece gets a soft green glow and a small
-                    <strong> ✦ mark</strong> so you can spot aura-enabled pieces at a glance.
-                    Knights project the aura, but they do not gain an extra jump themselves.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="learn-section learn-section--blue">
-            <div className="learn-section-badge">2</div>
-            <div className="learn-section-body">
-              <h3>Ride the Aura — Jump!</h3>
-              <p className="learn-section-subtitle">One leap, then keep going</p>
-              <p>
-                A piece inside the knight&apos;s aura can jump over <strong>exactly one</strong> blocker
-                along its normal movement path, then keep sliding as usual. It may
-                capture on any square it lands, even right after the jump.
-              </p>
-              <div className="learn-jump-demo">
-                <div className="learn-jump-track">
-                  <div className="learn-jump-cell learn-jump-cell--piece">♖</div>
-                  <div className="learn-jump-cell learn-jump-cell--empty"></div>
-                  <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
-                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
-                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
-                  <div className="learn-jump-cell learn-jump-cell--capture">♝</div>
-                </div>
-                <div className="learn-jump-arrow">
-                  <span>♖ leaps over ♟ and can land beyond it or capture ♝</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="learn-section learn-section--red">
-            <div className="learn-section-badge">3</div>
-            <div className="learn-section-body">
-              <h3>One Jump Per Move</h3>
-              <p className="learn-section-subtitle">The horse&apos;s gift has limits</p>
-              <p>
-                The knight shares its power for <strong>one leap only</strong>. After clearing
-                the first blocker, the next piece on that line still holds the file or diagonal.
-              </p>
-              <div className="learn-jump-demo">
-                <div className="learn-jump-track">
-                  <div className="learn-jump-cell learn-jump-cell--piece">♕</div>
-                  <div className="learn-jump-cell learn-jump-cell--empty"></div>
-                  <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
-                  <div className="learn-jump-cell learn-jump-cell--land">○</div>
-                  <div className="learn-jump-cell learn-jump-cell--blocked">♜</div>
-                  <div className="learn-jump-cell learn-jump-cell--nogo">✗</div>
-                </div>
-                <div className="learn-jump-arrow">
-                  <span>♕ clears ♟ but ♜ still stops the line</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="learn-section learn-section--green">
-            <div className="learn-section-badge">4</div>
-            <div className="learn-section-body">
-              <h3>Every Piece Gets Wings</h3>
-              <p className="learn-section-subtitle">Pawns and kings can ride the aura too</p>
-              <p>
-                The horse&apos;s power reaches everyone. <strong>Pawns</strong> near a knight can
-                jump one square forward over a blocker to an empty square, but they still
-                cannot capture by jumping straight ahead. <strong>Kings</strong> can also jump one safe
-                square when empowered, which creates unusual defensive and attacking ideas.
-              </p>
-              <div className="learn-jump-demo">
-                <div className="learn-jump-mini">
-                  <div className="learn-jump-col">
-                    <div className="learn-jump-cell learn-jump-cell--land">○</div>
-                    <div className="learn-jump-cell learn-jump-cell--blocker">♟</div>
-                    <div className="learn-jump-cell learn-jump-cell--piece">♙</div>
-                    <div className="learn-jump-cell learn-jump-cell--knight-src">♞</div>
-                  </div>
-                  <span className="learn-jump-col-label">♙ leaps the blocker because it is riding ♞&apos;s aura</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="learn-summary">
-            <h3>Quick Reference</h3>
-            <div className="learn-summary-grid">
-              <div className="learn-summary-card">
-                <span className="learn-summary-icon">♞</span>
-                <strong>The Aura</strong>
-                <p>8 adjacent + 8 knight-move squares = 16 empowered allies</p>
-              </div>
-              <div className="learn-summary-card">
-                <span className="learn-summary-icon">⤴</span>
-                <strong>The Jump</strong>
-                <p>Leap over exactly one blocker; pawns still capture diagonally, not straight ahead</p>
-              </div>
-              <div className="learn-summary-card">
-                <span className="learn-summary-icon">🛑</span>
-                <strong>The Limit</strong>
-                <p>One jump per move — the second blocker holds the line</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="learn-tutorial-launch">
-            <h3>Tutorials</h3>
-            <p>Open the dedicated tutorial page for step-by-step interactive lessons.</p>
-            <button className="btn btn-primary learn-tutorial-launch-btn" onClick={onOpenTutorials}>
-              Open Tutorials
-            </button>
-          </section>
-        </>
-      )}
-
+      <section className="learn-summary">
+        <h3>Quick Reference</h3>
+        <div className="learn-summary-grid">
+          <div className="learn-summary-card">
+            <span className="learn-summary-icon">♘</span>
+            <strong>The Aura</strong>
+            <p>Touch the knight or sit where the knight could jump</p>
+          </div>
+          <div className="learn-summary-card">
+            <span className="learn-summary-icon">⤴</span>
+            <strong>The Jump</strong>
+            <p>Clear the first blocker on the piece&apos;s normal path</p>
+          </div>
+          <div className="learn-summary-card">
+            <span className="learn-summary-icon">🛑</span>
+            <strong>The Limit</strong>
+            <p>Second blockers, pawn captures, and king safety still matter</p>
+          </div>
+        </div>
+      </section>
       <footer className="learn-page-footer">
         <button className="learn-back-btn" onClick={onBack}>
-          {tutorialsOnly ? '← Back to Learn' : '← Back to Game'}
+          ← Back to Game
         </button>
       </footer>
     </div>

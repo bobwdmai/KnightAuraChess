@@ -32,7 +32,7 @@ export default function AppPageRouter({
   if (currentPage === 'learn') {
     return (
       <Suspense fallback={pageFallback}>
-        <LearnPage onBack={() => onNavigate('home')} onOpenTutorials={() => onNavigate('tutorials')} />
+        <LearnPage onBack={() => onNavigate('home')} />
       </Suspense>
     );
   }
@@ -40,7 +40,7 @@ export default function AppPageRouter({
   if (currentPage === 'tutorials') {
     return (
       <Suspense fallback={pageFallback}>
-        <LearnPage onBack={() => onNavigate('learn')} tutorialsOnly />
+        <LearnPage onBack={() => onNavigate('home')} />
       </Suspense>
     );
   }
