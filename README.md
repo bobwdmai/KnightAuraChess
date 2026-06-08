@@ -151,18 +151,22 @@ Browser chat now defaults to same-origin `/api/text-ai` on:
 Configure Cloudflare Function env vars:
 
 ```env
-TEXT_AI_UPSTREAM_URL="https://your-llm-endpoint.example/v1/chat/completions"
-TEXT_AI_UPSTREAM_AUTH_BEARER="optional_api_key_or_token"
+TEXT_AI_MODEL="@cf/meta/llama-3-8b-instruct"
 ```
 
 Route:
-- `functions/api/text-ai.js` proxies chat payloads to your upstream provider.
+- `functions/api/text-ai.js` can call Cloudflare Workers AI directly through an `AI` binding.
 
 For production builds you can still override explicitly:
 
 ```env
 VITE_TEXT_AI_BASE_URL="/api/text-ai"
 ```
+
+Cloudflare deployment notes:
+- Add an AI binding named `AI` in your Cloudflare Pages project or Worker.
+- In Cloudflare Pages, add the Workers AI binding from the dashboard and redeploy.
+- If you prefer a proxy to another hosted LLM instead of Workers AI, keep `TEXT_AI_UPSTREAM_URL` and `TEXT_AI_UPSTREAM_AUTH_BEARER` configured as a fallback.
 
 ## 🚀 Deployment (Cloudflare Pages)
 
