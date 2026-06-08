@@ -36,6 +36,26 @@
   transform: translate3d(0, 0, 0) scale(var(--season-scale, 1));
 }
 
+.season-decor--holiday {
+  z-index: 2;
+}
+
+.season-decor--holiday .season-decor__item {
+  font-size: 1.3rem;
+  animation-timing-function: ease-in-out;
+}
+
+.season-decor__item--burst {
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.35),
+    0 0 18px rgba(255, 220, 120, 0.25);
+  animation-name: holiday-burst;
+}
+
+.season-decor__item--float {
+  animation-name: holiday-float;
+}
+
 .season-decor--winter .season-decor__item {
   color: rgba(230, 242, 255, 0.7);
   text-shadow: 0 0 10px rgba(200, 230, 255, 0.25);
@@ -56,6 +76,35 @@
   text-shadow: 0 0 12px rgba(230, 162, 84, 0.2);
 }
 
+.season-decor--new-year .season-decor__item {
+  color: rgba(255, 235, 140, 0.9);
+}
+
+.season-decor--valentines .season-decor__item {
+  color: rgba(255, 110, 150, 0.85);
+}
+
+.season-decor--april-fools .season-decor__item {
+  color: rgba(170, 255, 170, 0.7);
+}
+
+.season-decor--independence-day .season-decor__item {
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 0 12px rgba(80, 160, 255, 0.35));
+}
+
+.season-decor--halloween .season-decor__item {
+  color: rgba(255, 165, 70, 0.82);
+}
+
+.season-decor--thanksgiving .season-decor__item {
+  color: rgba(232, 177, 94, 0.78);
+}
+
+.season-decor--holiday .season-decor__item {
+  color: rgba(245, 245, 255, 0.82);
+}
+
 @keyframes seasonal-fall {
   0% {
     transform: translate3d(0, -6vh, 0) rotate(0deg) scale(var(--season-scale, 1));
@@ -69,6 +118,40 @@
   }
   100% {
     transform: translate3d(var(--season-drift, 0px), 112vh, 0) rotate(220deg) scale(var(--season-scale, 1));
+    opacity: 0;
+  }
+}
+
+@keyframes holiday-burst {
+  0% {
+    transform: translate3d(0, 8vh, 0) scale(0.2);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(var(--season-drift, 0px), -18vh, 0) scale(calc(var(--season-scale, 1) * 1.4));
+    opacity: 0;
+  }
+}
+
+@keyframes holiday-float {
+  0% {
+    transform: translate3d(0, -8vh, 0) scale(var(--season-scale, 1));
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(var(--season-drift, 0px), 104vh, 0) scale(calc(var(--season-scale, 1) * 1.12));
     opacity: 0;
   }
 }
