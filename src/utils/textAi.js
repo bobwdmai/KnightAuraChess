@@ -154,6 +154,17 @@ function getShortFollowUpReply(history, personaName, personaStyle) {
     return replyFromPool(pool);
   }
 
+  if (/\b(wanna play|wan na play|want to play|play chess|play a game|let'?s play|lets play)\b/.test(normalized)) {
+    const replies = {
+      'flirty/casual': ['Yeah, let’s play.', 'Sure, I’m in.', 'Absolutely.'],
+      'witty/playful': ['Yeah, let’s go.', 'Sure.', 'I’m down.'],
+      'shy/quiet': ['Yeah.', 'Sure, let’s play.', 'Okay.'],
+      'serious/mature': ['Yes, let’s play.', 'Certainly.', 'I’m ready.'],
+    };
+    const pool = replies[personaStyle] || replies['witty/playful'];
+    return replyFromPool(pool);
+  }
+
   if (['bye', 'goodbye', 'see ya', 'cya', 'later', 'see you'].includes(compact)) {
     const replies = {
       'flirty/casual': ['Bye.', 'See you.', 'Later.'],

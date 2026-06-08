@@ -112,12 +112,14 @@ function SignedInHomePanel({
   profile,
   rating,
   firebaseEnabled,
+  bots,
   incomingChallenge,
   onPlay,
   onOpenAccount,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
+  onChallengeBot,
 }) {
   const [recentGames, setRecentGames] = useState([]);
   const [loadingRecentGames, setLoadingRecentGames] = useState(false);
@@ -258,6 +260,25 @@ function SignedInHomePanel({
               <p className="home-card-label">Launcher Status</p>
               <strong>No pending challenge</strong>
               <span>Open Play for local boards, AI, or matchmaking.</span>
+            </div>
+          )}
+
+          {bots?.length > 0 && (
+            <div className="home-challenge-card">
+              <p className="home-card-label">Quick Bot Challenge</p>
+              <strong>Pick a bot and start a game.</strong>
+              <div className="home-bot-grid">
+                {bots.slice(0, 4).map((bot) => (
+                  <button
+                    key={bot.uid}
+                    className="btn btn-ghost"
+                    onClick={() => onChallengeBot?.(bot)}
+                    style={{ width: '100%' }}
+                  >
+                    {bot.name}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </aside>
@@ -455,12 +476,14 @@ export default function HomePage({
   rating,
   firebaseEnabled,
   incomingChallenge,
+  bots,
   onPlayGuest,
   onSignIn,
   onOpenAccount,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
+  onChallengeBot,
 }) {
   return (
     <main className="home-page">
@@ -471,11 +494,13 @@ export default function HomePage({
           rating={rating}
           firebaseEnabled={firebaseEnabled}
           incomingChallenge={incomingChallenge}
+          bots={bots}
           onPlay={onPlayGuest}
           onOpenAccount={onOpenAccount}
           onHowItWorks={onHowItWorks}
           onAcceptChallenge={onAcceptChallenge}
           onDeclineChallenge={onDeclineChallenge}
+          onChallengeBot={onChallengeBot}
         />
       ) : (
         <SignedOutHomePanel

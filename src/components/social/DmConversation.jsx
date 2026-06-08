@@ -13,6 +13,7 @@ import {
 import { db, firebaseEnabled } from '../../utils/firebase.js';
 import {
   DEFAULT_TEXT_AI_BASE_URL,
+  getBotPersona,
   isBotUid,
   loadBotChatMessages,
   requestTextAiReply,
@@ -36,6 +37,7 @@ export default function DmConversation({
   const retryTimersRef = useRef(new Set());
   const unmountedRef = useRef(false);
   const isBotConversation = isBotUid(partnerUid);
+  const botPersona = isBotConversation ? getBotPersona(partnerUid, partnerName) : null;
 
   const isRetryableBotError = (sendError) => {
     const status = Number(sendError?.status);
@@ -81,7 +83,12 @@ export default function DmConversation({
       clearRetryTimer(timerId);
       if (unmountedRef.current) return;
       try {
-        const reply = await requestTextAiReply({ history });
+        const reply = await requestTextAiReply({
+          history,
+          personaName: botPersona?.name || partnerName,
+          personaAge: botPersona?.age ?? null,
+          personaStyle: botPersona?.style ?? null,
+        });
         if (unmountedRef.current) return;
         appendBotReply(reply);
         setError('');
@@ -163,7 +170,12 @@ export default function DmConversation({
           role: message.senderId === currentUser.uid ? 'user' : 'assistant',
           content: message.text,
         }));
-        const reply = await requestTextAiReply({ history });
+        const reply = await requestTextAiReply({
+          history,
+          personaName: botPersona?.name || partnerName,
+          personaAge: botPersona?.age ?? null,
+          personaStyle: botPersona?.style ?? null,
+        });
         appendBotReply(reply, nextMessages);
       } catch (sendError) {
         if (isRetryableBotError(sendError)) {

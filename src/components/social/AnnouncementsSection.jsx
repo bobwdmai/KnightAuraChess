@@ -9,6 +9,27 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, firebaseEnabled } from '../../utils/firebase.js';
+import { getBotPersona, requestTextAiReply } from '../../utils/textAi.js';
+
+const BOT_LAUNCHER_BOTS = [
+  { uid: 'bot_alex_kim', name: 'Alex Kim' },
+  { uid: 'bot_jordan_park', name: 'Jordan Park' },
+  { uid: 'bot_morgan_chen', name: 'Morgan Chen' },
+  { uid: 'bot_casey_lee', name: 'Casey Lee' },
+  { uid: 'bot_riley_wang', name: 'Riley Wang' },
+  { uid: 'bot_taylor_singh', name: 'Taylor Singh' },
+];
+
+const BOT_LOBBY_MESSAGES = [
+  'Anyone up for a game?',
+  'I like the tension in aura chess.',
+  'I’m thinking about a new opening.',
+  'Good luck, everyone.',
+  'I’m around if somebody wants to play.',
+  'That last game was sharp.',
+];
+
+const BOT_LOBBY_LAST_KEY = 'cr_bot_lobby_last';
 
 export default function AnnouncementsSection({ currentUser, currentUserName, currentUserPhotoURL }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -28,6 +49,50 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
       setAnnouncements(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
     });
   }, []);
+
+  useEffect(() => {
+    if (!firebaseEnabled || !db || !currentUser) return undefined;
+
+    const scheduleBotLobbyTalk = () => {
+      const last = Number.parseInt(window.localStorage.getItem(BOT_LOBBY_LAST_KEY) || '0', 10) || 0;
+      const now = Date.now();
+      if (now - last < 5 * 60 * 1000) return;
+
+      const timerId = window.setTimeout(async () => {
+        try {
+          const speaker = BOT_LAUNCHER_BOTS[Math.floor(Math.random() * BOT_LAUNCHER_BOTS.length)];
+          const persona = getBotPersona(speaker.uid, speaker.name);
+          const prompt = [
+            { role: 'user', content: 'Say one short lobby message about chess or greetings.' },
+          ];
+          const botText = await requestTextAiReply({
+            history: prompt,
+            personaName: persona.name,
+            personaAge: persona.age,
+            personaStyle: persona.style,
+          });
+          await addDoc(collection(db, 'announcements'), {
+            text: botText,
+            authorId: speaker.uid,
+            authorName: speaker.name,
+            authorPhotoURL: null,
+            createdAt: serverTimestamp(),
+            isBot: true,
+          });
+          window.localStorage.setItem(BOT_LOBBY_LAST_KEY, String(Date.now()));
+        } catch {
+          // Keep lobby bot chatter best-effort and quiet.
+        }
+      }, 25_000 + Math.floor(Math.random() * 45_000));
+
+      return timerId;
+    };
+
+    const timerId = scheduleBotLobbyTalk();
+    return () => {
+      if (timerId) window.clearTimeout(timerId);
+    };
+  }, [currentUser]);
 
   const handleSend = async () => {
     if (!currentUser || !text.trim()) return;

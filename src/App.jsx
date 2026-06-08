@@ -61,6 +61,10 @@ const BOT_POOL = [
   { uid: 'bot_rowan_reyes',   name: 'Rowan Reyes' },
 ];
 
+const BOT_CHALLENGE_COOLDOWN_MS = 15 * 60 * 1000;
+const BOT_CHALLENGE_PENDING_KEY = 'cr_bot_challenge_pending';
+const BOT_CHALLENGE_LAST_KEY = 'cr_bot_challenge_last';
+
 const APP_BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '') || '';
 
 const TIME_CONTROLS = [
@@ -220,6 +224,7 @@ export default function App() {
   const [clockWhite, setClockWhite] = useState(null);
   const [clockBlack, setClockBlack] = useState(null);
   const [localResult, setLocalResult] = useState(null);
+  const botChallengeTimerRef = useRef(null);
   const [moveAnimation, setMoveAnimation] = useState(null);
   const [toasts, setToasts] = useState([]);
   const timeoutFiredRef = useRef(false);
@@ -673,6 +678,66 @@ export default function App() {
       setIncomingChallenge(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() });
     });
   }, [user]);
+
+  const sendBotChallenge = useCallback(async (bot) => {
+    if (!user || !firebaseEnabled || !db || !bot?.uid || gameId || incomingChallenge) return;
+    const now = Date.now();
+    const lastBotChallengeAt = Number.parseInt(localStorage.getItem(BOT_CHALLENGE_LAST_KEY) || '0', 10) || 0;
+    if (now - lastBotChallengeAt < BOT_CHALLENGE_COOLDOWN_MS) return;
+
+    const newGame = new KnightJumpChess();
+    const gameRef = await addDoc(collection(db, GAMES_COLLECTION), {
+      rule: RULE_ID,
+      status: 'waiting',
+      whiteId: bot.uid,
+      whiteName: bot.name,
+      whiteRating: bot.rating ?? 1200,
+      whiteReady: false,
+      blackReady: false,
+      blackId: null,
+      blackName: null,
+      blackRating: null,
+      fen: newGame.fen(),
+      moveHistory: [],
+      moveSeq: 0,
+      timeControl: selectedTimeControl,
+      whiteTimeLeft: selectedTimeControl,
+      blackTimeLeft: selectedTimeControl,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    await addDoc(collection(db, 'game_challenges'), {
+      from: bot.uid,
+      fromName: bot.name,
+      to: user.uid,
+      toName: displayName,
+      gameId: gameRef.id,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      isBotChallenge: true,
+    });
+    localStorage.setItem(BOT_CHALLENGE_LAST_KEY, String(now));
+    localStorage.setItem(BOT_CHALLENGE_PENDING_KEY, '1');
+  }, [user, firebaseEnabled, db, gameId, incomingChallenge, selectedTimeControl, displayName]);
+
+  useEffect(() => {
+    if (!user || !firebaseEnabled || !db || gameId || incomingChallenge) return undefined;
+    const pending = localStorage.getItem(BOT_CHALLENGE_PENDING_KEY) === '1';
+    if (pending) return undefined;
+
+    const delayMs = 30_000 + (Math.floor(Math.random() * 90_000));
+    botChallengeTimerRef.current = window.setTimeout(() => {
+      const bot = BOT_POOL[Math.floor(Math.random() * BOT_POOL.length)];
+      sendBotChallenge(bot).catch(() => {});
+    }, delayMs);
+
+    return () => {
+      if (botChallengeTimerRef.current) {
+        clearTimeout(botChallengeTimerRef.current);
+        botChallengeTimerRef.current = null;
+      }
+    };
+  }, [user, firebaseEnabled, db, gameId, incomingChallenge, sendBotChallenge]);
 
   useEffect(() => {
     if (!user || gameId) {
@@ -1600,11 +1665,22 @@ export default function App() {
     }
   };
 
+  const handleChallengeBot = async (bot) => {
+    if (!bot) return;
+    try {
+      await handleChallengeFriend(bot.uid, bot.name);
+      localStorage.removeItem(BOT_CHALLENGE_PENDING_KEY);
+    } catch (error) {
+      setMatchError(error.message || 'Failed to challenge bot');
+    }
+  };
+
   const acceptChallenge = async () => {
     if (!incomingChallenge || !user || !db) return;
     try {
       await joinCustomGame(incomingChallenge.gameId);
       await updateDoc(doc(db, 'game_challenges', incomingChallenge.id), { status: 'accepted' });
+      localStorage.removeItem(BOT_CHALLENGE_PENDING_KEY);
     } catch (error) {
       setMatchError(error.message || 'Failed to accept challenge');
     }
@@ -1613,6 +1689,7 @@ export default function App() {
   const declineChallenge = async () => {
     if (!incomingChallenge || !db) return;
     await deleteDoc(doc(db, 'game_challenges', incomingChallenge.id));
+    localStorage.removeItem(BOT_CHALLENGE_PENDING_KEY);
   };
 
   const cancelMatchmaking = async () => {
@@ -1827,6 +1904,7 @@ export default function App() {
     rating,
     firebaseEnabled,
     incomingChallenge,
+    bots: BOT_POOL,
     onPlayGuest: () => {
       setAiEnabled(false);
       resetPractice();
@@ -1842,6 +1920,7 @@ export default function App() {
       navigateToPage('game');
     },
     onDeclineChallenge: declineChallenge,
+    onChallengeBot: handleChallengeBot,
   };
 
   const signInPageProps = {
@@ -1953,10 +2032,12 @@ export default function App() {
       currentTurn: game.turn(),
       startMatchmaking,
       aiEnabled,
+      bots: BOT_POOL,
       onPlayAi: () => {
         setAiEnabled(true);
         resetPractice();
       },
+      onChallengeBot: handleChallengeBot,
       aiDifficulty,
       aiDifficultyLevels: AI_DIFFICULTY_LEVELS,
       onSelectAiDifficulty: setAiDifficulty,
