@@ -211,7 +211,16 @@ export function AuthProvider({ children }) {
       },
       signInAnonymously: () => {
         if (!firebaseEnabled || !auth) return firebaseNotReadyError();
-        return firebaseSignInAnonymously(auth);
+        return firebaseSignInAnonymously(auth).catch((error) => {
+          if (error?.code === 'auth/admin-restricted-operation') {
+            const friendly = new Error(
+              'Guest login is disabled in Firebase. Enable Anonymous sign-in in Authentication -> Sign-in method.'
+            );
+            friendly.code = error.code;
+            throw friendly;
+          }
+          throw error;
+        });
       },
       signOut: async () => {
         if (!firebaseEnabled || !auth) return Promise.resolve();

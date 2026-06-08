@@ -244,6 +244,12 @@ export default function App() {
 
   const isOnline = Boolean(gameId);
   const board3d = boardView === 'realistic';
+  const canStartOnlineMatch = Boolean(user && firebaseEnabled && db);
+  const onlineMatchHelpText = !user
+    ? 'Sign in to play online.'
+    : !firebaseEnabled || !db
+      ? 'Online play needs Firebase to be configured.'
+      : '';
 
   useEffect(() => {
     const handlePopState = () => {
@@ -1851,6 +1857,8 @@ export default function App() {
     onSubmit: handleEmailAuth,
     onGoogle: signInWithGoogle,
     onGuest: signInAnonymously,
+    canStartOnlineMatch,
+    onlineMatchHelpText,
   };
 
   const boardShellProps = {
@@ -1929,6 +1937,8 @@ export default function App() {
       isOnline,
       user,
       firebaseEnabled,
+      canStartOnlineMatch,
+      onlineMatchHelpText,
       gameData,
       matchStatus,
       opponentName,
