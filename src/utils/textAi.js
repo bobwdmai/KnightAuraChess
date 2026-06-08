@@ -1,4 +1,4 @@
-const DEFAULT_TEXT_AI_MODEL = (import.meta.env.VITE_TEXT_AI_MODEL || 'deepseek/deepseek-r1-0528-qwen3-8b').trim();
+const DEFAULT_TEXT_AI_MODEL = (import.meta.env.VITE_TEXT_AI_MODEL || 'smollm:135m').trim();
 
 function getDefaultTextAiBaseUrl() {
   if (import.meta.env.VITE_TEXT_AI_BASE_URL) {
@@ -12,7 +12,7 @@ function getDefaultTextAiBaseUrl() {
     }
   }
 
-  return import.meta.env.VITE_TEXT_AI_PROXY_URL || 'http://10.253.0.1:1234/v1/chat/completions';
+  return import.meta.env.VITE_TEXT_AI_PROXY_URL || 'http://localhost:11434/v1/chat/completions';
 }
 
 const DEFAULT_TEXT_AI_BASE_URL = getDefaultTextAiBaseUrl().trim();
