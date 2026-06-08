@@ -53,7 +53,7 @@ export default function SocialTab({
               className={`social-subtab-btn${subTab === 'bots' ? ' active' : ''}`}
               onClick={() => setSubTab('bots')}
             >
-              Bots
+              Live
             </button>
           </div>
           {subTab === 'lobby' && (

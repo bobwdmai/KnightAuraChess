@@ -154,7 +154,7 @@ export default function PlayTabPanel({
 
           {bots?.length > 0 && (
             <div style={{ marginBottom: '8px' }}>
-              <p className="play-section-label" style={{ marginBottom: '6px' }}>Challenge a Bot</p>
+              <p className="play-section-label" style={{ marginBottom: '6px' }}>Quick Challenge</p>
               <div className="bot-challenge-grid">
                 {bots.slice(0, 6).map((bot) => (
                   <button

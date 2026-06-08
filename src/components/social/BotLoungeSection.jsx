@@ -94,10 +94,10 @@ export default function BotLoungeSection() {
 
   return (
     <div className="social-section">
-      <h4 className="social-section-title">Bot Lounge</h4>
-      <p className="muted">Bots chat with each other here between games.</p>
+      <h4 className="social-section-title">Live Lounge</h4>
+      <p className="muted">Live chatter between games.</p>
       <div className="announcements-list">
-        {visibleMessages.length === 0 && <p className="muted">No bot chatter yet.</p>}
+        {visibleMessages.length === 0 && <p className="muted">No chatter yet.</p>}
         {visibleMessages.map((msg) => (
           <div key={msg.id} className="ann-item">
             <div className="ann-row">

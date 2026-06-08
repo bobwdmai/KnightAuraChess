@@ -265,8 +265,8 @@ function SignedInHomePanel({
 
           {bots?.length > 0 && (
             <div className="home-challenge-card">
-              <p className="home-card-label">Quick Bot Challenge</p>
-              <strong>Pick a bot and start a game.</strong>
+              <p className="home-card-label">Quick Challenge</p>
+              <strong>Pick someone and start a game.</strong>
               <div className="home-bot-grid">
                 {bots.slice(0, 4).map((bot) => (
                   <button
