@@ -3012,13 +3012,6 @@ textarea.select {
     display: none;
   }
 
-  /* At very narrow widths, hide Sign Out too — accessible from profile */
-  @media (max-width: 480px) {
-    .auth-user .btn {
-      display: none;
-    }
-  }
-
   .layout {
     padding: 10px;
     gap: 12px;
@@ -3062,6 +3055,50 @@ textarea.select {
   .tab-label { display: none; }
   .tab-btn { padding: 12px 0; }
   .tab-icon { font-size: 1.2rem; }
+}
+
+@media (max-width: 700px) {
+  /* Stack board + sidebar vertically */
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 8px 8px 16px;
+    gap: 12px 0;
+  }
+
+  /* Sidebar: no longer sticky full-height panel */
+  .sidebar {
+    height: auto;
+    position: static;
+    max-height: 55vh;
+  }
+
+  /* Board fills full column width */
+  .board-section {
+    padding: 0;
+  }
+
+  /* Compact header brand */
+  .brand-subtitle {
+    display: none;
+  }
+
+  .brand h1 {
+    font-size: 1.05rem;
+  }
+
+  .brand-logo {
+    height: 24px;
+  }
+
+  /* Compact auth panel — hide name/rating, keep avatar + Sign out */
+  .auth-name,
+  .auth-meta {
+    display: none;
+  }
+
+  .auth-user-chip {
+    padding: 4px 6px;
+  }
 }
 
 /* ══════════════════════════════════════════

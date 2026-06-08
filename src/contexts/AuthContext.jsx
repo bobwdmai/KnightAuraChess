@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   createUserWithEmailAndPassword,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInAnonymously as firebaseSignInAnonymously,
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut
 } from 'firebase/auth';
 import {
@@ -39,11 +41,29 @@ export function AuthProvider({ children }) {
       return undefined;
     }
 
-    const unsub = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
-      setAuthReady(true);
-    });
-    return () => unsub();
+    let active = true;
+    let unsub = () => {};
+
+    (async () => {
+      try {
+        await getRedirectResult(auth);
+      } catch (error) {
+        if (error?.code && error.code !== 'auth/no-auth-event') {
+          console.warn('Google redirect sign-in failed:', error?.message || error);
+        }
+      }
+
+      if (!active) return;
+      unsub = onAuthStateChanged(auth, (nextUser) => {
+        setUser(nextUser);
+        setAuthReady(true);
+      });
+    })();
+
+    return () => {
+      active = false;
+      unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -163,9 +183,23 @@ export function AuthProvider({ children }) {
       profileReady,
       rating: profile?.rating ?? 1200,
       displayName: profile?.displayName || getDisplayName(user),
-      signInWithGoogle: () => {
+      signInWithGoogle: async () => {
         if (!firebaseEnabled || !auth || !googleProvider) return firebaseNotReadyError();
-        return signInWithPopup(auth, googleProvider);
+        try {
+          return await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+          const fallbackCodes = new Set([
+            'auth/popup-blocked',
+            'auth/popup-closed-by-user',
+            'auth/cancelled-popup-request',
+            'auth/operation-not-supported-in-this-environment',
+          ]);
+          if (fallbackCodes.has(error?.code)) {
+            await signInWithRedirect(auth, googleProvider);
+            return null;
+          }
+          throw error;
+        }
       },
       signInWithEmail: (email, password) => {
         if (!firebaseEnabled || !auth) return firebaseNotReadyError();
@@ -182,7 +216,8 @@ export function AuthProvider({ children }) {
       signOut: async () => {
         if (!firebaseEnabled || !auth) return Promise.resolve();
         if (user && db) {
-          await setDoc(doc(db, 'users', user.uid), { online: false, lastSeen: serverTimestamp() }, { merge: true }).catch(() => {});
+          // Best-effort presence update only. Sign-out should still succeed if Firestore is offline.
+          setDoc(doc(db, 'users', user.uid), { online: false, lastSeen: serverTimestamp() }, { merge: true }).catch(() => {});
         }
         return firebaseSignOut(auth);
       }
