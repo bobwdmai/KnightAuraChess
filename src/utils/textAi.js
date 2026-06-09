@@ -5,14 +5,7 @@ function getDefaultTextAiBaseUrl() {
     return import.meta.env.VITE_TEXT_AI_BASE_URL;
   }
 
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname.toLowerCase();
-    if (host === 'knightaurachess.com' || host === 'www.knightaurachess.com') {
-      return '/api/text-ai';
-    }
-  }
-
-  return import.meta.env.VITE_TEXT_AI_PROXY_URL || 'http://localhost:11434/v1/chat/completions';
+  return import.meta.env.VITE_TEXT_AI_PROXY_URL || '/api/text-ai';
 }
 
 const DEFAULT_TEXT_AI_BASE_URL = getDefaultTextAiBaseUrl().trim();
@@ -308,6 +301,59 @@ function getShortFollowUpReply(history, personaName, personaStyle) {
   return '';
 }
 
+function pickDeterministic(pool, seed) {
+  if (!Array.isArray(pool) || pool.length === 0) return '';
+  return pool[Math.abs(hashString(seed)) % pool.length];
+}
+
+function getOfflineFallbackReply(history, personaName, personaStyle) {
+  const lastUserMessage = [...history].reverse().find((message) => message?.role === 'user')?.content;
+  if (!lastUserMessage) return '';
+
+  const normalized = String(lastUserMessage).toLowerCase();
+  const compact = normalized.replace(/[^\p{L}\p{N}\s']/gu, ' ').replace(/\s+/g, ' ').trim();
+  const tonePools = {
+    'flirty/casual': ['Yeah, I’d say so.', 'Honestly, yeah.', 'Sure feels like it.', 'That tracks.'],
+    'witty/playful': ['Yep, that sounds right.', 'I’d go with that.', 'Pretty much.', 'Fair enough.'],
+    'shy/quiet': ['Yeah, probably.', 'I think so.', 'That seems right.', 'Mm-hm.'],
+    'serious/mature': ['Yes, that seems correct.', 'I would agree.', 'That is reasonable.', 'Most likely.'],
+  };
+  const followUpPools = {
+    'flirty/casual': ['What made you think that?', 'Want to test it on the board?', 'How come?'],
+    'witty/playful': ['What do you think?', 'Want to play it out?', 'How are you reading it?'],
+    'shy/quiet': ['What do you mean?', 'Want to show me?', 'How so?'],
+    'serious/mature': ['What is your reasoning?', 'Would you like to play it through?', 'How did you reach that?'],
+  };
+
+  const opening = pickDeterministic(
+    tonePools[personaStyle] || tonePools['witty/playful'],
+    `${personaName}:${compact}:opening`
+  );
+  const followUp = pickDeterministic(
+    followUpPools[personaStyle] || followUpPools['witty/playful'],
+    `${personaName}:${compact}:followup`
+  );
+
+  if (!compact) return opening;
+  if (compact.length <= 6) return `${opening} ${followUp}`.trim();
+  if (/\b(why|how|what|when|where|who|should|could|would|can|do|did|is|are|am)\b/.test(compact) || compact.endsWith('?')) {
+    return `${opening} ${followUp}`.trim();
+  }
+
+  const detailPools = {
+    'flirty/casual': ['I could see that.', 'That feels right.', 'Not a bad take.'],
+    'witty/playful': ['I could see that.', 'That feels reasonable.', 'Not a bad take.'],
+    'shy/quiet': ['I could see that.', 'That feels okay.', 'Not a bad take.'],
+    'serious/mature': ['I could see that.', 'That appears reasonable.', 'Not a bad take.'],
+  };
+  const detail = pickDeterministic(
+    detailPools[personaStyle] || detailPools['witty/playful'],
+    `${personaName}:${compact}:detail`
+  );
+
+  return `${opening} ${detail}`.trim();
+}
+
 export function getBotPersona(uid, displayName = 'AI') {
   const year = new Date().getFullYear();
   const seed = hashString(String(uid || displayName));
@@ -369,40 +415,46 @@ export async function requestTextAiReply({
   ].filter(Boolean).join(' ');
   const personaLine = `Your name is ${personaName}. ${personaTraits}`.trim();
 
-  const response = await fetch(baseUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    signal: controller.signal,
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: `${DEFAULT_TEXT_AI_SYSTEM_PROMPT} ${personaLine}`.trim() },
-        ...history,
-      ],
-      max_tokens: 20480,
-      temperature: 0.2,
-      stream: false,
-    }),
-  });
+  try {
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: `${DEFAULT_TEXT_AI_SYSTEM_PROMPT} ${personaLine}`.trim() },
+          ...history,
+        ],
+        max_tokens: 20480,
+        temperature: 0.2,
+        stream: false,
+      }),
+    });
 
-  clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    const error = new Error(errorText || `Text AI request failed with ${response.status}`);
-    error.status = response.status;
+    if (!response.ok) {
+      const errorText = await response.text();
+      const error = new Error(errorText || `Text AI request failed with ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+
+    const data = await response.json();
+    const content = sanitizeAiReply(extractReplyContent(data));
+    if (content) {
+      return content;
+    }
+    throw new Error('Text AI returned an empty reply.');
+  } catch (error) {
+    clearTimeout(timeoutId);
+    const fallback = getOfflineFallbackReply(history, personaName, personaStyle);
+    if (fallback) return fallback;
     throw error;
   }
-
-  const data = await response.json();
-  const content = sanitizeAiReply(extractReplyContent(data));
-  if (!content) {
-    throw new Error('Text AI returned an empty reply.');
-  }
-
-  return content;
 }
 
 export {

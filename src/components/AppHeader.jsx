@@ -7,6 +7,7 @@ export default function AppHeader({
   profile,
   displayName,
   rating,
+  onOpenMarketplace,
   onOpenProfile,
   onOpenSignIn,
   onSignOut,
@@ -22,6 +23,13 @@ export default function AppHeader({
       </div>
 
       <div className="auth-panel">
+        <button
+          className="btn btn-ghost"
+          style={{ fontSize: '0.8rem', padding: '5px 12px' }}
+          onClick={onOpenMarketplace}
+        >
+          Marketplace
+        </button>
         {!authReady ? (
           <span className="auth-status">Connecting...</span>
         ) : !firebaseEnabled ? (

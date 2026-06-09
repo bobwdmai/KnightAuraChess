@@ -55,6 +55,7 @@ const TIME_CONTROLS = [
   { label: '30 min', seconds: 1800 },
 ];
 const DEFAULT_TIME_CONTROL = 300;
+const MARKETPLACE_URL = import.meta.env.VITE_MARKETPLACE_URL || 'https://bobwdmai.github.io/knightaurachess-marketplace/';
 
 const createNewGame = () => new KnightJumpChess();
 
@@ -415,6 +416,10 @@ export default function App() {
     }
   }, [authEmail, authMode, authPassword, signInWithEmail, signUpWithEmail]);
 
+  const openMarketplace = useCallback(() => {
+    window.open(MARKETPLACE_URL, '_blank', 'noopener,noreferrer');
+  }, []);
+
   useEffect(() => {
     localResultRef.current = localResult;
   }, [localResult]);
@@ -622,6 +627,7 @@ export default function App() {
     onOpenAccount: () => {
       if (user) setProfileModalUid(user.uid);
     },
+    onOpenMarketplace: openMarketplace,
     onHowItWorks: () => navigateToPage('learn'),
     onAcceptChallenge: async () => {
       await acceptChallenge();
@@ -817,6 +823,7 @@ export default function App() {
         profile={profile}
         displayName={displayName}
         rating={rating}
+        onOpenMarketplace={openMarketplace}
         onOpenProfile={() => setProfileModalUid(user.uid)}
         onOpenSignIn={() => navigateToPage('signin')}
         onSignOut={signOut}
