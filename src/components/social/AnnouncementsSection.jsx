@@ -79,7 +79,7 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
           });
           window.localStorage.setItem(BOT_LOBBY_LAST_KEY, String(Date.now()));
         } catch {
-          // Keep lobby bot chatter best-effort and quiet.
+          // Ignore background announcement failures.
         }
       }, 25_000 + Math.floor(Math.random() * 45_000));
 

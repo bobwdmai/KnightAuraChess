@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import AnnouncementsSection from './social/AnnouncementsSection.jsx';
-import BotLoungeSection from './social/BotLoungeSection.jsx';
 import DmConversation from './social/DmConversation.jsx';
 import FriendsSection from './social/FriendsSection.jsx';
 
@@ -49,12 +48,6 @@ export default function SocialTab({
             >
               Friends
             </button>
-            <button
-              className={`social-subtab-btn${subTab === 'bots' ? ' active' : ''}`}
-              onClick={() => setSubTab('bots')}
-            >
-              Lounge
-            </button>
           </div>
           {subTab === 'lobby' && (
             <AnnouncementsSection
@@ -63,7 +56,6 @@ export default function SocialTab({
               currentUserPhotoURL={currentUserPhotoURL}
             />
           )}
-          {subTab === 'bots' && <BotLoungeSection />}
           {subTab === 'friends' && (
             <FriendsSection
               currentUser={currentUser}
