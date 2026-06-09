@@ -63,7 +63,13 @@
 .lp-hero {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 56px 28px 24px;
+  padding: 72px 28px 28px;
+}
+
+@media (max-width: 920px) {
+  .lp-hero {
+    padding-top: 60px;
+  }
 }
 
 .lp-hero-eyebrow {

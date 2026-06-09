@@ -604,6 +604,14 @@ function PuzzleCard({ puzzle }) {
 
 /* ---------- LearnPage ---------- */
 export default function LearnPage({ onBack }) {
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = 'knightAuraChess — Learn';
+    return () => {
+      document.title = previousTitle;
+    };
+  }, []);
+
   return (
     <div className="lp-page">
       <header className="lp-header">
