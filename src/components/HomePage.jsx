@@ -53,7 +53,12 @@ function getGameSummary(game, userId) {
     return { result: 'Draw', className: 'draw', opponentName };
   }
 
-  const userWon = game.winner === userId;
+  const winnerValue = String(game.winner).toLowerCase();
+  const userColor = isWhite ? 'w' : 'b';
+  const userWon = game.winner === userId
+    || winnerValue === userColor
+    || (winnerValue === 'white' && userColor === 'w')
+    || (winnerValue === 'black' && userColor === 'b');
   return {
     result: userWon ? 'Win' : 'Loss',
     className: userWon ? 'win' : 'loss',
