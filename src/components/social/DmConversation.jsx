@@ -116,14 +116,21 @@ export default function DmConversation({
       orderBy('createdAt', 'asc'),
       limit(100)
     );
-    return onSnapshot(messagesQuery, (snap) => {
-      setMessages(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
-      if (currentUser && db) {
-        setDoc(doc(db, 'dms', chatId), {
-          [`lastReadAt_${currentUser.uid}`]: serverTimestamp(),
-        }, { merge: true }).catch(() => {});
+    return onSnapshot(
+      messagesQuery,
+      (snap) => {
+        setMessages(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        if (currentUser && db) {
+          setDoc(doc(db, 'dms', chatId), {
+            [`lastReadAt_${currentUser.uid}`]: serverTimestamp(),
+          }, { merge: true }).catch(() => {});
+        }
+      },
+      (error) => {
+        console.warn('DM conversation snapshot failed:', error?.message || error);
+        setError(error?.message || 'Direct messages are temporarily unavailable.');
       }
-    });
+    );
   }, [chatId, currentUser, isBotConversation]);
 
   useEffect(() => {

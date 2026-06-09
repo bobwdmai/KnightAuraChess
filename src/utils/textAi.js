@@ -82,7 +82,6 @@ function getDirectPersonaReply(history, personaName, personaStyle) {
   if (!lastUserMessage) return '';
 
   const normalized = String(lastUserMessage).toLowerCase();
-  const compact = normalized.replace(/[^\p{L}\p{N}\s']/gu, ' ').replace(/\s+/g, ' ').trim();
   const asksName = /\b(who are you|what('?s| is) your name|what do you go by|who's this|whos this)\b/.test(normalized);
   const asksIfAi = /\b(are you an ai|are you ai|r u an ai|are u an ai|are you a bot|are you a robot|what are you)\b/.test(normalized);
   const asksIdentity = asksName || asksIfAi || /\b(who are you)\b/.test(normalized);
@@ -262,7 +261,7 @@ function getShortFollowUpReply(history, personaName, personaStyle) {
     return replyFromPool(pool);
   }
 
-  if (/\b(what!?\??|what\!+|huh\!+)\b/.test(normalized)) {
+  if (/\b(what!?\??|what!+|huh!+)\b/.test(normalized)) {
     const replies = {
       'flirty/casual': ['What?', 'Huh?', 'Yeah?'],
       'witty/playful': ['What?', 'Huh?', 'Wait, what?'],

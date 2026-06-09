@@ -112,14 +112,12 @@ function SignedInHomePanel({
   profile,
   rating,
   firebaseEnabled,
-  bots,
   incomingChallenge,
   onPlay,
   onOpenAccount,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
-  onChallengeBot,
 }) {
   const [recentGames, setRecentGames] = useState([]);
   const [loadingRecentGames, setLoadingRecentGames] = useState(false);
@@ -263,24 +261,6 @@ function SignedInHomePanel({
             </div>
           )}
 
-          {bots?.length > 0 && (
-            <div className="home-challenge-card">
-              <p className="home-card-label">Quick Challenge</p>
-              <strong>Pick someone and start a game.</strong>
-              <div className="home-bot-grid">
-                {bots.slice(0, 4).map((bot) => (
-                  <button
-                    key={bot.uid}
-                    className="btn btn-ghost"
-                    onClick={() => onChallengeBot?.(bot)}
-                    style={{ width: '100%' }}
-                  >
-                    {bot.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </aside>
       </section>
 
@@ -476,14 +456,12 @@ export default function HomePage({
   rating,
   firebaseEnabled,
   incomingChallenge,
-  bots,
   onPlayGuest,
   onSignIn,
   onOpenAccount,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
-  onChallengeBot,
 }) {
   return (
     <main className="home-page">
@@ -494,13 +472,11 @@ export default function HomePage({
           rating={rating}
           firebaseEnabled={firebaseEnabled}
           incomingChallenge={incomingChallenge}
-          bots={bots}
           onPlay={onPlayGuest}
           onOpenAccount={onOpenAccount}
           onHowItWorks={onHowItWorks}
           onAcceptChallenge={onAcceptChallenge}
           onDeclineChallenge={onDeclineChallenge}
-          onChallengeBot={onChallengeBot}
         />
       ) : (
         <SignedOutHomePanel

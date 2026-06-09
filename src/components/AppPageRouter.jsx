@@ -67,7 +67,7 @@ export default function AppPageRouter({
       <footer className="footer">
         <div className="footer-brand">
           <span className="footer-brand-dot" />
-          Knight-Aura Chess
+          knight-Aura Chess
         </div>
         <span className="footer-meta">Chess reimagined — unleash the power of the horse</span>
       </footer>

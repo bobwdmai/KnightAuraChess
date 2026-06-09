@@ -20,15 +20,6 @@ const BOT_LAUNCHER_BOTS = [
   { uid: 'bot_taylor_singh', name: 'Taylor Singh' },
 ];
 
-const BOT_LOBBY_MESSAGES = [
-  'Anyone up for a game?',
-  'I like the tension in aura chess.',
-  'I’m thinking about a new opening.',
-  'Good luck, everyone.',
-  'I’m around if somebody wants to play.',
-  'That last game was sharp.',
-];
-
 const BOT_LOBBY_LAST_KEY = 'cr_bot_lobby_last';
 
 export default function AnnouncementsSection({ currentUser, currentUserName, currentUserPhotoURL }) {
@@ -45,9 +36,16 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
       orderBy('createdAt', 'desc'),
       limit(50)
     );
-    return onSnapshot(announcementsQuery, (snap) => {
-      setAnnouncements(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
-    });
+    return onSnapshot(
+      announcementsQuery,
+      (snap) => {
+        setAnnouncements(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+      },
+      (error) => {
+        console.warn('Announcements snapshot failed:', error?.message || error);
+        setAnnouncements([]);
+      }
+    );
   }, []);
 
   useEffect(() => {

@@ -98,9 +98,6 @@ const PST = {
   ],
 };
 
-const FILES = ['a','b','c','d','e','f','g','h'];
-const RANKS = ['8','7','6','5','4','3','2','1'];
-
 function mirrorIndex(i) {
   return (7 - Math.floor(i / 8)) * 8 + (i % 8);
 }
@@ -188,7 +185,7 @@ function evaluate(game) {
   for (const [r, f] of bKnightCoords) addKnightToAura(r, f, bAura);
 
   // Second pass: score every piece
-  for (const { p, ri, fi, idx } of pieces) {
+  for (const { p, idx } of pieces) {
     const val = PIECE_VALUE[p.type];
 
     // Choose PST (king switches to endgame table when material is low)

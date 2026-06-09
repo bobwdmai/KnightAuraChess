@@ -141,15 +141,25 @@ export function AuthProvider({ children }) {
         window.addEventListener('beforeunload', handleUnload);
         unloadCleanup = () => window.removeEventListener('beforeunload', handleUnload);
 
-        unsubscribe = onSnapshot(profileRef, (docSnap) => {
-          if (!docSnap.exists()) {
-            setProfile(null);
+        unsubscribe = onSnapshot(
+          profileRef,
+          (docSnap) => {
+            if (!docSnap.exists()) {
+              setProfile(null);
+              setProfileReady(true);
+              return;
+            }
+            setProfile({ id: docSnap.id, ...docSnap.data() });
             setProfileReady(true);
-            return;
+          },
+          (error) => {
+            console.warn('Auth profile snapshot failed:', error?.message || error);
+            if (active) {
+              setProfile(null);
+              setProfileReady(true);
+            }
           }
-          setProfile({ id: docSnap.id, ...docSnap.data() });
-          setProfileReady(true);
-        });
+        );
       } catch (error) {
         console.warn('Auth profile setup failed:', error?.message || error);
         if (active) {

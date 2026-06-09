@@ -4,7 +4,6 @@ export default function PlayTabPanel({
   isOnline,
   user,
   firebaseEnabled,
-  bots,
   gameData,
   matchStatus,
   opponentName,
@@ -22,7 +21,6 @@ export default function PlayTabPanel({
   onlineMatchHelpText,
   aiEnabled,
   onPlayAi,
-  onChallengeBot,
   aiDifficulty,
   aiDifficultyLevels,
   onSelectAiDifficulty,
@@ -151,25 +149,6 @@ export default function PlayTabPanel({
           >
             ⚙ Play vs AI
           </button>
-
-          {bots?.length > 0 && (
-            <div style={{ marginBottom: '8px' }}>
-              <p className="play-section-label" style={{ marginBottom: '6px' }}>Quick Challenge</p>
-              <div className="bot-challenge-grid">
-                {bots.slice(0, 6).map((bot) => (
-                  <button
-                    key={bot.uid}
-                    className="bot-challenge-btn"
-                    onClick={() => onChallengeBot?.(bot)}
-                    disabled={!user}
-                    title={`Challenge ${bot.name}`}
-                  >
-                    {bot.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div style={{ marginBottom: '8px' }}>
             <p className="play-section-label" style={{ marginBottom: '6px' }}>AI Difficulty</p>
