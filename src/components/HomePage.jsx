@@ -120,7 +120,6 @@ function SignedInHomePanel({
   incomingChallenge,
   onPlay,
   onOpenAccount,
-  onOpenMarketplace,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
@@ -208,9 +207,6 @@ function SignedInHomePanel({
             </button>
             <button className="btn btn-ghost home-cta" onClick={onOpenAccount}>
               Account
-            </button>
-            <button className="btn btn-ghost home-cta" onClick={onOpenMarketplace}>
-              Marketplace
             </button>
             <button className="btn btn-ghost home-cta" onClick={onHowItWorks}>
               How It Works
@@ -353,14 +349,6 @@ function SignedInHomePanel({
               </span>
               <span className="home-lane__arrow" aria-hidden="true">→</span>
             </button>
-            <button type="button" className="home-lane" onClick={onOpenMarketplace} aria-label="Open the marketplace">
-              <span className="home-lane__mark">M</span>
-              <span className="home-lane__body">
-                <strong>Marketplace</strong>
-                <span>Browse free themes, piece sets, and community packs.</span>
-              </span>
-              <span className="home-lane__arrow" aria-hidden="true">→</span>
-            </button>
             <button type="button" className="home-lane" onClick={onHowItWorks} aria-label="Read the Learn page">
               <span className="home-lane__mark">L</span>
               <span className="home-lane__body">
@@ -390,7 +378,6 @@ function SignedOutHomePanel({
   firebaseEnabled,
   onPlayGuest,
   onSignIn,
-  onOpenMarketplace,
   onHowItWorks,
   primaryActionLabel = 'Play as Guest',
 }) {
@@ -414,9 +401,6 @@ function SignedOutHomePanel({
             </button>
             <button className="btn btn-ghost home-cta" onClick={onSignIn}>
               Sign In
-            </button>
-            <button className="btn btn-ghost home-cta" onClick={onOpenMarketplace}>
-              Marketplace
             </button>
             <button className="btn btn-ghost home-cta" onClick={onHowItWorks}>
               How It Works
@@ -442,12 +426,6 @@ function SignedOutHomePanel({
           <span className="home-highlight__hint">Start board →</span>
         </article>
         <article className="home-highlight">
-          <div className="home-highlight__mark" aria-hidden="true">✦</div>
-          <h3>Marketplace</h3>
-          <p>Grab free board themes and piece sets, or publish your own community pack through GitHub.</p>
-          <span className="home-highlight__hint">Browse packs →</span>
-        </article>
-        <article className="home-highlight">
           <div className="home-highlight__mark" aria-hidden="true">↗</div>
           <h3>Sign In</h3>
           <p>Google, email, or guest auth — keep a rating, social graph, and live-game history.</p>
@@ -467,7 +445,6 @@ function SignedOutHomePanel({
         </div>
         <div className="home-outro__actions">
           <button className="btn btn-ghost" onClick={onHowItWorks}>Learn the rule</button>
-          <button className="btn btn-ghost" onClick={onOpenMarketplace}>Marketplace</button>
           <button className="btn btn-primary" onClick={onPlayGuest} aria-label="Start a guest board">
             Start a game →
           </button>
@@ -487,7 +464,6 @@ export default function HomePage({
   onPlayGuest,
   onSignIn,
   onOpenAccount,
-  onOpenMarketplace,
   onHowItWorks,
   onAcceptChallenge,
   onDeclineChallenge,
@@ -503,7 +479,6 @@ export default function HomePage({
           incomingChallenge={incomingChallenge}
           onPlay={onPlayGuest}
           onOpenAccount={onOpenAccount}
-          onOpenMarketplace={onOpenMarketplace}
           onHowItWorks={onHowItWorks}
           onAcceptChallenge={onAcceptChallenge}
           onDeclineChallenge={onDeclineChallenge}
@@ -513,7 +488,6 @@ export default function HomePage({
           firebaseEnabled={firebaseEnabled}
           onPlayGuest={onPlayGuest}
           onSignIn={onSignIn}
-          onOpenMarketplace={onOpenMarketplace}
           onHowItWorks={onHowItWorks}
           primaryActionLabel={authReady ? 'Play as Guest' : 'Play'}
         />

@@ -2,25 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { themeToVars } from '../components/ThemeCreator.jsx';
 
 const BOARD_VIEW_MODES = ['flat', 'realistic'];
-const MARKETPLACE_THEME_KEY = 'kac_marketplace_theme';
+
 export const BASE_THEMES = [
   { key: 'classic', label: 'Classic', l: 'swatch-classic-light', d: 'swatch-classic-dark' },
   { key: 'slate', label: 'Slate', l: 'swatch-slate-light', d: 'swatch-slate-dark' },
   { key: 'rosewood', label: 'Rosewood', l: 'swatch-rosewood-light', d: 'swatch-rosewood-dark' },
 ];
-
-function loadMarketplaceTheme() {
-  try {
-    const raw = localStorage.getItem(MARKETPLACE_THEME_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    if (!parsed.id || !parsed.name || !parsed.lightSquare || !parsed.darkSquare) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
 
 function getInitialBoardView() {
   const savedBoardView = localStorage.getItem('cr_board_view');
@@ -38,19 +25,9 @@ function getInitialBoardCornerRadius() {
 }
 
 export function usePersistentPreferences() {
-  const marketplaceTheme = loadMarketplaceTheme();
-  const [theme, setTheme] = useState(() => {
-    if (marketplaceTheme?.id) return `custom:${marketplaceTheme.id}`;
-    return localStorage.getItem('cr_theme') || 'classic';
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('cr_theme') || 'classic');
   const [customThemes, setCustomThemes] = useState(
-    () => {
-      const stored = JSON.parse(localStorage.getItem('cr_custom_themes') || '[]');
-      if (!Array.isArray(stored)) return marketplaceTheme ? [marketplaceTheme] : [];
-      if (!marketplaceTheme?.id) return stored;
-      if (stored.some((ct) => ct.id === marketplaceTheme.id)) return stored;
-      return [...stored, marketplaceTheme];
-    }
+    () => JSON.parse(localStorage.getItem('cr_custom_themes') || '[]')
   );
   const [showThemeCreator, setShowThemeCreator] = useState(false);
   const [boardView, setBoardView] = useState(() => getInitialBoardView());
