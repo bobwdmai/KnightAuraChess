@@ -4,6 +4,7 @@ import GameSidebar from './GameSidebar.jsx';
 import HomePage from './HomePage.jsx';
 
 const LearnPage = lazy(() => import('./LearnPage.jsx'));
+const CommunityPuzzlesPage = lazy(() => import('./CommunityPuzzlesPage.jsx'));
 const SignInPage = lazy(() => import('./SignInPage.jsx'));
 const UptimePage = lazy(() => import('./UptimePage.jsx'));
 
@@ -20,6 +21,8 @@ export default function AppPageRouter({
   signInPageProps,
   boardShellProps,
   sidebarProps,
+  currentUser,
+  currentUserName,
 }) {
   if (currentPage === 'signin') {
     return (
@@ -32,7 +35,10 @@ export default function AppPageRouter({
   if (currentPage === 'learn') {
     return (
       <Suspense fallback={pageFallback}>
-        <LearnPage onBack={() => onNavigate('home')} />
+        <LearnPage
+          onBack={() => onNavigate('home')}
+          onOpenCommunityPuzzles={() => onNavigate('puzzles')}
+        />
       </Suspense>
     );
   }
@@ -40,7 +46,23 @@ export default function AppPageRouter({
   if (currentPage === 'tutorials') {
     return (
       <Suspense fallback={pageFallback}>
-        <LearnPage onBack={() => onNavigate('home')} />
+        <LearnPage
+          onBack={() => onNavigate('home')}
+          onOpenCommunityPuzzles={() => onNavigate('puzzles')}
+        />
+      </Suspense>
+    );
+  }
+
+  if (currentPage === 'puzzles') {
+    return (
+      <Suspense fallback={pageFallback}>
+        <CommunityPuzzlesPage
+          onBack={() => onNavigate('home')}
+          onOpenLearn={() => onNavigate('learn')}
+          currentUser={currentUser}
+          currentUserName={currentUserName}
+        />
       </Suspense>
     );
   }

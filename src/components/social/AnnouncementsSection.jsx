@@ -114,7 +114,7 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
 
   return (
     <div className="social-section">
-      <h4 className="social-section-title">Lobby Announcements</h4>
+      <h4 className="social-section-title">Lobby Chat</h4>
       <div className="announcements-list" ref={listRef}>
         {announcements.length === 0 && <p className="muted">No announcements yet.</p>}
         {[...announcements].reverse().map((announcement) => (
@@ -123,7 +123,9 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
             className={`ann-item${announcement.authorId === currentUser?.uid ? ' ann-item--own' : ''}`}
           >
             <div className="ann-row">
-              <span className="ann-author">{announcement.authorName || 'Player'}</span>
+              <span className="ann-author">
+                {announcement.authorName || 'Player'}
+              </span>
               {announcement.createdAt?.toDate && (
                 <span className="ann-time">
                   {announcement.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

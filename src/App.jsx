@@ -623,6 +623,7 @@ export default function App() {
       if (user) setProfileModalUid(user.uid);
     },
     onHowItWorks: () => navigateToPage('learn'),
+    onOpenCommunityPuzzles: () => navigateToPage('puzzles'),
     onAcceptChallenge: async () => {
       await acceptChallenge();
       navigateToPage('game');
@@ -836,6 +837,8 @@ export default function App() {
           signInPageProps={signInPageProps}
           boardShellProps={boardShellProps}
           sidebarProps={sidebarProps}
+          currentUser={user}
+          currentUserName={displayName}
         />
       </RuntimeErrorBoundary>
 

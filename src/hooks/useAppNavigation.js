@@ -8,6 +8,7 @@ function getPageFromLocation() {
   if (/\/SignIn\/?$/.test(path)) return 'signin';
   if (/\/Tutorials\/?$/.test(path)) return 'tutorials';
   if (/\/Learn\/?$/.test(path)) return 'learn';
+  if (/\/Puzzles\/?$/.test(path)) return 'puzzles';
   if (/\/Play\/?$/.test(path)) return 'game';
   if (/\/uptime\/?$/i.test(path)) return 'uptime';
   return 'home';
@@ -19,6 +20,7 @@ function setBrowserPage(page, replace = false) {
   if (page === 'signin') nextUrl = `${APP_BASE_PATH}/SignIn`;
   else if (page === 'tutorials') nextUrl = `${APP_BASE_PATH}/Tutorials`;
   else if (page === 'learn') nextUrl = `${APP_BASE_PATH}/Learn`;
+  else if (page === 'puzzles') nextUrl = `${APP_BASE_PATH}/Puzzles`;
   else if (page === 'game') nextUrl = `${APP_BASE_PATH}/Play`;
   else if (page === 'uptime') nextUrl = `${APP_BASE_PATH}/uptime`;
   const method = replace ? 'replaceState' : 'pushState';
