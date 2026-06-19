@@ -193,16 +193,16 @@ function getKingCount(pieces, king) {
   return Object.values(pieces).filter((piece) => piece === king).length;
 }
 
-function getLegalMoveFromSquares(fen, from, to, promotion = 'q') {
+function getLegalMoveFromSquares(fen, from, to) {
   if (!from || !to) return null;
   try {
     const game = new KnightJumpChess(fen);
     const moves = game.moves({ verbose: true }) || [];
-    return moves.find((move) => (
-      move.from === from &&
-      move.to === to &&
-      (move.promotion || 'q') === (promotion || 'q')
-    )) || null;
+    const matchingMoves = moves.filter((move) => move.from === from && move.to === to);
+    return matchingMoves.find((move) => !move.promotion) ||
+      matchingMoves.find((move) => move.promotion === 'q') ||
+      matchingMoves[0] ||
+      null;
   } catch {
     return null;
   }
@@ -269,17 +269,15 @@ function BoardBuilder({
   builderMode,
   solutionFrom,
   solutionTo,
-  promotion,
   onSelectPiece,
   onSelectMode,
   onSelectSide,
-  onSelectPromotion,
   onPlacePiece,
   onSelectSolutionSquare,
   onClearBoard,
 }) {
   const fen = piecesToFen(pieces, sideToMove);
-  const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo, promotion);
+  const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo);
   const selectedSquares = [solutionFrom, solutionTo].filter(Boolean);
 
   return (
@@ -343,19 +341,6 @@ function BoardBuilder({
               <span>From: {solutionFrom || '-'}</span>
               <span>To: {solutionTo || '-'}</span>
             </div>
-            <label className="cp-field">
-              <span>Promotion</span>
-              <select
-                className="select cp-input"
-                value={promotion}
-                onChange={(event) => onSelectPromotion(event.target.value)}
-              >
-                <option value="q">Queen</option>
-                <option value="r">Rook</option>
-                <option value="b">Bishop</option>
-                <option value="n">Knight</option>
-              </select>
-            </label>
             <p className={solutionMove ? 'cp-success' : 'cp-hint'}>
               {solutionMove ? 'Solution selected.' : 'Click the moving piece, then its destination.'}
             </p>
@@ -606,7 +591,6 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   const [builderMode, setBuilderMode] = useState('pieces');
   const [solutionFrom, setSolutionFrom] = useState('');
   const [solutionTo, setSolutionTo] = useState('');
-  const [promotion, setPromotion] = useState('q');
   const storageMode = firebaseEnabled && db && currentUser ? 'Firestore' : 'Local';
 
   useEffect(() => {
@@ -690,7 +674,6 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     setBuilderMode('pieces');
     setSolutionFrom('');
     setSolutionTo('');
-    setPromotion('q');
   };
 
   const syncLocalPuzzleState = (nextLocalPuzzles) => {
@@ -738,7 +721,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     const hint = form.hint.trim();
     const tags = normalizeTags(form.tags);
     const fen = piecesToFen(builderPieces, sideToMove);
-    const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo, promotion);
+    const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo);
 
     if (!title) {
       setSubmitError('Add a title.');
@@ -870,7 +853,6 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     setBuilderMode('solution');
     setSolutionFrom(parsedSolution?.from || '');
     setSolutionTo(parsedSolution?.to || '');
-    setPromotion(parsedSolution?.promotion || 'q');
     setView('submit');
   };
 
@@ -1126,11 +1108,9 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
                 builderMode={builderMode}
                 solutionFrom={solutionFrom}
                 solutionTo={solutionTo}
-                promotion={promotion}
                 onSelectPiece={setSelectedPiece}
                 onSelectMode={setBuilderMode}
                 onSelectSide={setSideToMove}
-                onSelectPromotion={setPromotion}
                 onPlacePiece={handlePlacePiece}
                 onSelectSolutionSquare={handleSelectSolutionSquare}
                 onClearBoard={() => {
