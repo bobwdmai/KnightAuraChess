@@ -390,7 +390,8 @@ function PuzzleCard({
   onModerate,
   onToggleFollow,
 }) {
-  const [answer, setAnswer] = useState('');
+  const [moveFrom, setMoveFrom] = useState('');
+  const [moveTo, setMoveTo] = useState('');
   const [feedback, setFeedback] = useState('');
   const [ratings, setRatings] = useState([]);
   const [solved, setSolved] = useState(false);
@@ -431,9 +432,9 @@ function PuzzleCard({
     );
   }, [puzzle]);
 
-  const trySolve = () => {
+  const checkSelectedMove = (from, to) => {
     const game = new KnightJumpChess(puzzle.fen);
-    const userMove = getLegalMatch(game, answer);
+    const userMove = getLegalMoveFromSquares(puzzle.fen, from, to);
     const solutionMove = getLegalMatch(game, puzzle.solution);
 
     if (!solutionMove) {
@@ -449,6 +450,45 @@ function PuzzleCard({
 
     setSolved(false);
     setFeedback('Not quite. Try another move.');
+  };
+
+  const handleBoardSquareClick = (square) => {
+    const game = new KnightJumpChess(puzzle.fen);
+    const legalMoves = game.moves({ verbose: true }) || [];
+    const isLegalSource = legalMoves.some((move) => move.from === square);
+
+    if (!moveFrom || moveTo) {
+      setMoveTo('');
+      setSolved(false);
+      if (!isLegalSource) {
+        setMoveFrom('');
+        setFeedback('Choose a piece that can move.');
+        return;
+      }
+      setMoveFrom(square);
+      setFeedback('Now click where that piece should move.');
+      return;
+    }
+
+    if (square === moveFrom) {
+      setMoveFrom('');
+      setFeedback('Choose the piece you want to move.');
+      return;
+    }
+
+    const selectedMove = getLegalMoveFromSquares(puzzle.fen, moveFrom, square);
+    if (!selectedMove) {
+      if (isLegalSource) {
+        setMoveFrom(square);
+        setFeedback('Now click where that piece should move.');
+      } else {
+        setFeedback('That destination is not legal. Try another square.');
+      }
+      return;
+    }
+
+    setMoveTo(square);
+    checkSelectedMove(moveFrom, square);
   };
 
   const handleRate = async (rating) => {
@@ -484,28 +524,15 @@ function PuzzleCard({
       )}
       <p className="cp-description">{puzzle.description || 'A community-made position from the board.'}</p>
       <div className="cp-board-wrap">
-        <Board fen={puzzle.fen} />
+        <Board
+          fen={puzzle.fen}
+          onSquareClick={handleBoardSquareClick}
+          selectedSquares={[moveFrom, moveTo].filter(Boolean)}
+        />
       </div>
       <div className="cp-solution">
-        <label className="cp-label" htmlFor={`puzzle-${puzzle.id}`}>Your move</label>
-        <div className="cp-solution-row">
-          <input
-            id={`puzzle-${puzzle.id}`}
-            className="select cp-input"
-            value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
-            placeholder="Type your move, like Nf7 or e2e4"
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                trySolve();
-              }
-            }}
-          />
-          <button className="btn btn-primary" onClick={trySolve}>
-            Check
-          </button>
-        </div>
+        <span className="cp-label">Your move</span>
+        <p className="cp-hint">Click a piece, then click its destination.</p>
         {puzzle.hint && <p className="cp-hint">Hint: {puzzle.hint}</p>}
         {feedback && <p className={`cp-feedback${solved ? ' is-solved' : ''}`}>{feedback}</p>}
       </div>
