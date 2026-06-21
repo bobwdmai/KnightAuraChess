@@ -208,6 +208,40 @@ function getLegalMoveFromSquares(fen, from, to) {
   }
 }
 
+function replaySolutionMoves(fen, solutionMoves = []) {
+  try {
+    const game = new KnightJumpChess(fen);
+    const appliedMoves = [];
+    for (const notation of solutionMoves) {
+      const move = getLegalMatch(game, notation);
+      if (!move) return { fen: game.fen(), appliedMoves, valid: false };
+      const applied = game.move({
+        from: move.from,
+        to: move.to,
+        promotion: move.promotion || 'q',
+      });
+      if (!applied) return { fen: game.fen(), appliedMoves, valid: false };
+      appliedMoves.push(applied);
+    }
+    return { fen: game.fen(), appliedMoves, valid: true };
+  } catch {
+    return { fen, appliedMoves: [], valid: false };
+  }
+}
+
+function getPuzzleSolutionMoves(puzzle) {
+  if (Array.isArray(puzzle?.solutionMoves) && puzzle.solutionMoves.length > 0) {
+    return puzzle.solutionMoves.filter((move) => typeof move === 'string').slice(0, 20);
+  }
+  try {
+    const game = new KnightJumpChess(puzzle?.fen || DEFAULT_FEN);
+    const move = getLegalMatch(game, puzzle?.solution || '');
+    return move ? [moveToNotation(move)] : [];
+  } catch {
+    return [];
+  }
+}
+
 function Board({ fen, onSquareClick, selectedSquares = [] }) {
   const cells = useMemo(() => fenToCells(fen), [fen]);
   const squareEls = [];
@@ -267,6 +301,7 @@ function BoardBuilder({
   sideToMove,
   selectedPiece,
   builderMode,
+  solutionMoves,
   solutionFrom,
   solutionTo,
   onSelectPiece,
@@ -274,10 +309,16 @@ function BoardBuilder({
   onSelectSide,
   onPlacePiece,
   onSelectSolutionSquare,
+  onUndoSolution,
+  onClearSolution,
   onClearBoard,
 }) {
-  const fen = piecesToFen(pieces, sideToMove);
-  const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo);
+  const baseFen = piecesToFen(pieces, sideToMove);
+  const replayedSolution = useMemo(
+    () => replaySolutionMoves(baseFen, solutionMoves),
+    [baseFen, solutionMoves]
+  );
+  const fen = builderMode === 'solution' ? replayedSolution.fen : baseFen;
   const selectedSquares = [solutionFrom, solutionTo].filter(Boolean);
 
   return (
@@ -341,9 +382,26 @@ function BoardBuilder({
               <span>From: {solutionFrom || '-'}</span>
               <span>To: {solutionTo || '-'}</span>
             </div>
-            <p className={solutionMove ? 'cp-success' : 'cp-hint'}>
-              {solutionMove ? 'Solution selected.' : 'Click the moving piece, then its destination.'}
+            <div className="cp-sequence-list" aria-label="Solution moves">
+              {solutionMoves.length > 0
+                ? solutionMoves.map((move, index) => (
+                  <span className="cp-sequence-chip" key={`${move}-${index}`}>
+                    {index + 1}. {move}
+                  </span>
+                ))
+                : <span className="cp-hint">No moves selected yet.</span>}
+            </div>
+            <p className="cp-hint">
+              Click a piece and destination. The board will move forward so you can add the next solution move.
             </p>
+            <div className="cp-sequence-actions">
+              <button type="button" className="btn btn-ghost" onClick={onUndoSolution} disabled={solutionMoves.length === 0}>
+                Undo last move
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={onClearSolution} disabled={solutionMoves.length === 0}>
+                Clear solution
+              </button>
+            </div>
           </div>
         )}
 
@@ -392,9 +450,13 @@ function PuzzleCard({
 }) {
   const [moveFrom, setMoveFrom] = useState('');
   const [moveTo, setMoveTo] = useState('');
+  const [displayFen, setDisplayFen] = useState(puzzle.fen);
+  const [solutionIndex, setSolutionIndex] = useState(0);
+  const [lastAttemptCorrect, setLastAttemptCorrect] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [ratings, setRatings] = useState([]);
   const [solved, setSolved] = useState(false);
+  const solutionMoves = useMemo(() => getPuzzleSolutionMoves(puzzle), [puzzle]);
 
   const sideToMove = String(puzzle.sideToMove || puzzle.fen?.split?.(' ')?.[1] || 'w').toLowerCase() === 'b'
     ? 'Black'
@@ -432,34 +494,70 @@ function PuzzleCard({
     );
   }, [puzzle]);
 
-  const checkSelectedMove = (from, to) => {
-    const game = new KnightJumpChess(puzzle.fen);
-    const userMove = getLegalMoveFromSquares(puzzle.fen, from, to);
-    const solutionMove = getLegalMatch(game, puzzle.solution);
+  const resetPuzzle = () => {
+    setDisplayFen(puzzle.fen);
+    setSolutionIndex(0);
+    setMoveFrom('');
+    setMoveTo('');
+    setLastAttemptCorrect(null);
+    setFeedback('Choose the piece you want to move.');
+    setSolved(false);
+  };
+
+  const checkSelectedMove = (from, to, currentFen) => {
+    const game = new KnightJumpChess(currentFen);
+    const userMove = getLegalMoveFromSquares(currentFen, from, to);
+    const solutionMove = getLegalMatch(game, solutionMoves[solutionIndex]);
 
     if (!solutionMove) {
       setFeedback('This puzzle is missing a valid solution.');
       return;
     }
 
-    if (userMove && userMove.san === solutionMove.san) {
-      setSolved(true);
-      setFeedback('Correct. Nice read.');
+    if (!userMove) return;
+
+    game.move({
+      from: userMove.from,
+      to: userMove.to,
+      promotion: userMove.promotion || 'q',
+    });
+    setDisplayFen(game.fen());
+
+    if (moveToNotation(userMove) === moveToNotation(solutionMove)) {
+      const nextIndex = solutionIndex + 1;
+      const complete = nextIndex >= solutionMoves.length;
+      setSolutionIndex(nextIndex);
+      setLastAttemptCorrect(true);
+      setSolved(complete);
+      setFeedback(complete
+        ? 'Correct. You completed the full solution.'
+        : `Correct. Find move ${nextIndex + 1} of ${solutionMoves.length}.`);
       return;
     }
 
+    setLastAttemptCorrect(false);
     setSolved(false);
-    setFeedback('Not quite. Try another move.');
+    setFeedback('Not quite. The move is shown; click another piece to retry this step.');
   };
 
   const handleBoardSquareClick = (square) => {
-    const game = new KnightJumpChess(puzzle.fen);
+    if (solved) return;
+
+    let currentFen = displayFen;
+    if (moveTo) {
+      if (lastAttemptCorrect === false) {
+        currentFen = replaySolutionMoves(puzzle.fen, solutionMoves.slice(0, solutionIndex)).fen;
+        setDisplayFen(currentFen);
+      }
+      setMoveFrom('');
+      setMoveTo('');
+    }
+
+    const game = new KnightJumpChess(currentFen);
     const legalMoves = game.moves({ verbose: true }) || [];
     const isLegalSource = legalMoves.some((move) => move.from === square);
 
     if (!moveFrom || moveTo) {
-      setMoveTo('');
-      setSolved(false);
       if (!isLegalSource) {
         setMoveFrom('');
         setFeedback('Choose a piece that can move.');
@@ -476,7 +574,7 @@ function PuzzleCard({
       return;
     }
 
-    const selectedMove = getLegalMoveFromSquares(puzzle.fen, moveFrom, square);
+    const selectedMove = getLegalMoveFromSquares(currentFen, moveFrom, square);
     if (!selectedMove) {
       if (isLegalSource) {
         setMoveFrom(square);
@@ -488,7 +586,7 @@ function PuzzleCard({
     }
 
     setMoveTo(square);
-    checkSelectedMove(moveFrom, square);
+    checkSelectedMove(moveFrom, square, currentFen);
   };
 
   const handleRate = async (rating) => {
@@ -525,16 +623,21 @@ function PuzzleCard({
       <p className="cp-description">{puzzle.description || 'A community-made position from the board.'}</p>
       <div className="cp-board-wrap">
         <Board
-          fen={puzzle.fen}
+          fen={displayFen}
           onSquareClick={handleBoardSquareClick}
           selectedSquares={[moveFrom, moveTo].filter(Boolean)}
         />
       </div>
       <div className="cp-solution">
         <span className="cp-label">Your move</span>
-        <p className="cp-hint">Click a piece, then click its destination.</p>
+        <p className="cp-hint">
+          Click a piece, then its destination. Step {Math.min(solutionIndex + 1, Math.max(solutionMoves.length, 1))} of {Math.max(solutionMoves.length, 1)}.
+        </p>
         {puzzle.hint && <p className="cp-hint">Hint: {puzzle.hint}</p>}
         {feedback && <p className={`cp-feedback${solved ? ' is-solved' : ''}`}>{feedback}</p>}
+        <button type="button" className="btn btn-ghost" onClick={resetPuzzle}>
+          Reset puzzle
+        </button>
       </div>
       <div className="cp-footer">
         <span>{formatPuzzleDate(puzzle)}</span>
@@ -616,6 +719,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   const [sideToMove, setSideToMove] = useState('w');
   const [selectedPiece, setSelectedPiece] = useState('P');
   const [builderMode, setBuilderMode] = useState('pieces');
+  const [solutionMoves, setSolutionMoves] = useState([]);
   const [solutionFrom, setSolutionFrom] = useState('');
   const [solutionTo, setSolutionTo] = useState('');
   const storageMode = firebaseEnabled && db && currentUser ? 'Firestore' : 'Local';
@@ -699,6 +803,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     setSideToMove('w');
     setSelectedPiece('P');
     setBuilderMode('pieces');
+    setSolutionMoves([]);
     setSolutionFrom('');
     setSolutionTo('');
   };
@@ -748,7 +853,8 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     const hint = form.hint.trim();
     const tags = normalizeTags(form.tags);
     const fen = piecesToFen(builderPieces, sideToMove);
-    const solutionMove = getLegalMoveFromSquares(fen, solutionFrom, solutionTo);
+    const replayedSolution = replaySolutionMoves(fen, solutionMoves);
+    const firstSolutionMove = replayedSolution.appliedMoves[0];
 
     if (!title) {
       setSubmitError('Add a title.');
@@ -760,8 +866,8 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
       return;
     }
 
-    if (!solutionMove) {
-      setSubmitError('Pick a legal solution move on the board.');
+    if (solutionMoves.length === 0 || !replayedSolution.valid || !firstSolutionMove) {
+      setSubmitError('Add at least one legal solution move on the board.');
       return;
     }
 
@@ -783,7 +889,8 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
         title,
         description,
         fen,
-        solution: solutionMove.san,
+        solution: firstSolutionMove.san,
+        solutionMoves,
         hint,
         tags,
         authorId: currentUser?.uid || 'local',
@@ -800,7 +907,8 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
             title,
             description,
             fen,
-            solution: solutionMove.san,
+            solution: firstSolutionMove.san,
+            solutionMoves,
             hint,
             tags,
             status: nextStatus,
@@ -862,8 +970,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   const handleEdit = (puzzle) => {
     const nextPieces = fenToPieces(puzzle.fen || DEFAULT_FEN);
     const nextSideToMove = String(puzzle.fen || DEFAULT_FEN).split(' ')[1] === 'b' ? 'b' : 'w';
-    const game = new KnightJumpChess(puzzle.fen || DEFAULT_FEN);
-    const parsedSolution = getLegalMatch(game, puzzle.solution || '');
+    const existingSolutionMoves = getPuzzleSolutionMoves(puzzle);
 
     setSubmitError('');
     setSubmitStatus('');
@@ -878,12 +985,16 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     setSideToMove(nextSideToMove);
     setSelectedPiece('P');
     setBuilderMode('solution');
-    setSolutionFrom(parsedSolution?.from || '');
-    setSolutionTo(parsedSolution?.to || '');
+    setSolutionMoves(existingSolutionMoves);
+    setSolutionFrom('');
+    setSolutionTo('');
     setView('submit');
   };
 
   const handlePlacePiece = (square) => {
+    setSolutionMoves([]);
+    setSolutionFrom('');
+    setSolutionTo('');
     setBuilderPieces((current) => {
       const next = { ...current };
       if (selectedPiece) next[square] = selectedPiece;
@@ -893,7 +1004,24 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   };
 
   const handleSelectSolutionSquare = (square) => {
+    if (solutionMoves.length >= 20 && (!solutionFrom || solutionTo)) {
+      setSubmitError('A puzzle solution can contain up to 20 moves.');
+      return;
+    }
+    const baseFen = piecesToFen(builderPieces, sideToMove);
+    const currentFen = replaySolutionMoves(baseFen, solutionMoves).fen;
+    const game = new KnightJumpChess(currentFen);
+    const legalMoves = game.moves({ verbose: true }) || [];
+    const isLegalSource = legalMoves.some((move) => move.from === square);
+
     if (!solutionFrom || (solutionFrom && solutionTo)) {
+      if (!isLegalSource) {
+        setSolutionFrom('');
+        setSolutionTo('');
+        setSubmitError('Choose a piece that can move in the current solution position.');
+        return;
+      }
+      setSubmitError('');
       setSolutionFrom(square);
       setSolutionTo('');
       return;
@@ -903,7 +1031,21 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
       setSolutionTo('');
       return;
     }
+
+    const move = getLegalMoveFromSquares(currentFen, solutionFrom, square);
+    if (!move) {
+      if (isLegalSource) {
+        setSolutionFrom(square);
+        setSolutionTo('');
+      } else {
+        setSubmitError('That destination is not legal in the current solution position.');
+      }
+      return;
+    }
+
+    setSubmitError('');
     setSolutionTo(square);
+    setSolutionMoves((current) => [...current, moveToNotation(move)].slice(0, 20));
   };
 
   const handleDelete = async (puzzle) => {
@@ -1133,15 +1275,32 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
                 sideToMove={sideToMove}
                 selectedPiece={selectedPiece}
                 builderMode={builderMode}
+                solutionMoves={solutionMoves}
                 solutionFrom={solutionFrom}
                 solutionTo={solutionTo}
                 onSelectPiece={setSelectedPiece}
                 onSelectMode={setBuilderMode}
-                onSelectSide={setSideToMove}
+                onSelectSide={(color) => {
+                  setSideToMove(color);
+                  setSolutionMoves([]);
+                  setSolutionFrom('');
+                  setSolutionTo('');
+                }}
                 onPlacePiece={handlePlacePiece}
                 onSelectSolutionSquare={handleSelectSolutionSquare}
+                onUndoSolution={() => {
+                  setSolutionMoves((current) => current.slice(0, -1));
+                  setSolutionFrom('');
+                  setSolutionTo('');
+                }}
+                onClearSolution={() => {
+                  setSolutionMoves([]);
+                  setSolutionFrom('');
+                  setSolutionTo('');
+                }}
                 onClearBoard={() => {
                   setBuilderPieces({});
+                  setSolutionMoves([]);
                   setSolutionFrom('');
                   setSolutionTo('');
                 }}

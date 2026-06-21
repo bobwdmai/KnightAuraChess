@@ -156,6 +156,11 @@ service cloud.firestore {
         data.solution is string &&
         data.solution.size() > 0 &&
         data.solution.size() <= 32 &&
+        (!('solutionMoves' in data) || (
+          data.solutionMoves is list &&
+          data.solutionMoves.size() > 0 &&
+          data.solutionMoves.size() <= 20
+        )) &&
         data.authorId is string &&
         data.authorName is string &&
         data.authorName.size() > 0 &&

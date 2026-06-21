@@ -377,6 +377,34 @@
   gap: 10px;
 }
 
+.cp-sequence-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  align-items: center;
+}
+
+.cp-sequence-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid rgba(125,196,53,0.32);
+  border-radius: var(--radius-sm);
+  background: rgba(125,196,53,0.1);
+  color: var(--accent-bright);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.cp-sequence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .cp-solution {
   display: grid;
   gap: 8px;
