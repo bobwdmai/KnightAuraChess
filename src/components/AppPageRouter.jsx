@@ -5,6 +5,7 @@ import HomePage from './HomePage.jsx';
 
 const LearnPage = lazy(() => import('./LearnPage.jsx'));
 const CommunityPuzzlesPage = lazy(() => import('./CommunityPuzzlesPage.jsx'));
+const NotFoundPage = lazy(() => import('./NotFoundPage.jsx'));
 const SignInPage = lazy(() => import('./SignInPage.jsx'));
 const UptimePage = lazy(() => import('./UptimePage.jsx'));
 
@@ -77,6 +78,17 @@ export default function AppPageRouter({
 
   if (currentPage === 'home') {
     return <HomePage {...homePageProps} />;
+  }
+
+  if (currentPage === 'not-found') {
+    return (
+      <Suspense fallback={pageFallback}>
+        <NotFoundPage
+          onHome={() => onNavigate('home')}
+          onPlay={() => onNavigate('game')}
+        />
+      </Suspense>
+    );
   }
 
   return (

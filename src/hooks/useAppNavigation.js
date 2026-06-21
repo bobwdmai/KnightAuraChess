@@ -5,13 +5,19 @@ const APP_BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '') || '
 function getPageFromLocation() {
   if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname;
+  const homePaths = new Set([
+    APP_BASE_PATH || '/',
+    `${APP_BASE_PATH}/`,
+    `${APP_BASE_PATH}/index.html`,
+  ]);
+  if (homePaths.has(path)) return 'home';
   if (/\/SignIn\/?$/.test(path)) return 'signin';
   if (/\/Tutorials\/?$/.test(path)) return 'tutorials';
   if (/\/Learn\/?$/.test(path)) return 'learn';
   if (/\/Puzzles\/?$/.test(path)) return 'puzzles';
   if (/\/Play\/?$/.test(path)) return 'game';
   if (/\/uptime\/?$/i.test(path)) return 'uptime';
-  return 'home';
+  return 'not-found';
 }
 
 function setBrowserPage(page, replace = false) {
