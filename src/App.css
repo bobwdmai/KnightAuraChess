@@ -2312,11 +2312,25 @@ textarea.select {
 [data-theme="light"] .home-record-tile,
 [data-theme="light"] .home-status-card,
 [data-theme="light"] .home-challenge-card,
+[data-theme="light"] .home-highlight,
 [data-theme="light"] .home-aura-strip__diagram {
   background:
     linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245, 241, 236, 0.92));
   border-color: rgba(0,0,0,0.08);
   box-shadow: 0 14px 32px rgba(41, 36, 28, 0.1);
+}
+
+[data-theme="light"] .home-highlight p {
+  color: #4f4a43;
+}
+
+[data-theme="light"] .home-highlight__hint {
+  color: #4b5f30;
+}
+
+[data-theme="light"] .home-highlight__mark {
+  background: rgba(79, 133, 25, 0.12);
+  border-color: rgba(79, 133, 25, 0.32);
 }
 
 [data-theme="light"] .home-aura-diagram {
