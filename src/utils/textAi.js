@@ -400,12 +400,6 @@ export async function requestTextAiReply({
   personaAge = null,
   personaStyle = null,
 }) {
-  const directReply = getDirectPersonaReply(history, personaName, personaStyle);
-  if (directReply) return directReply;
-
-  const shortFollowUpReply = getShortFollowUpReply(history, personaName, personaStyle);
-  if (shortFollowUpReply) return shortFollowUpReply;
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
   const personaTraits = [
@@ -451,8 +445,6 @@ export async function requestTextAiReply({
     throw new Error('Text AI returned an empty reply.');
   } catch (error) {
     clearTimeout(timeoutId);
-    const fallback = getOfflineFallbackReply(history, personaName, personaStyle);
-    if (fallback) return fallback;
     throw error;
   }
 }

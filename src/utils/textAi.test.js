@@ -6,18 +6,16 @@ afterEach(() => {
 });
 
 describe('requestTextAiReply', () => {
-  it('falls back to an offline bot reply when the AI endpoint is unavailable', async () => {
+  it('does not generate a local reply when the AI endpoint is unavailable', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error('network down'));
     vi.stubGlobal('fetch', fetchMock);
 
-    const reply = await requestTextAiReply({
-      history: [{ role: 'user', content: 'The board feels crowded tonight.' }],
+    await expect(requestTextAiReply({
+      history: [{ role: 'user', content: 'Tell me about this position.' }],
       personaName: 'Alex Kim',
       personaStyle: 'witty/playful',
-    });
+    })).rejects.toThrow('network down');
 
     expect(fetchMock).toHaveBeenCalled();
-    expect(reply).toBeTruthy();
-    expect(reply).not.toMatch(/ollama/i);
   });
 });
