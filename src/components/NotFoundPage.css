@@ -1,9 +1,11 @@
 .nf-page {
-  --nf-ink: #090a08;
-  --nf-cream: #fff3d1;
-  --nf-muted: #b9b5a7;
-  --nf-line: rgba(255, 243, 209, 0.16);
-  --nf-accent: #8bd52f;
+  --nf-ink: var(--bg-body);
+  --nf-cream: var(--text-bright);
+  --nf-muted: var(--text-muted);
+  --nf-line: var(--border);
+  --nf-accent: var(--accent-bright);
+  --nf-grid: rgba(255,255,255,0.018);
+  --nf-warm-glow: rgba(255, 221, 143, 0.08);
   position: relative;
   min-height: 100vh;
   overflow: hidden;
@@ -11,11 +13,16 @@
   grid-template-rows: auto 1fr auto;
   color: var(--nf-cream);
   background:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px),
-    radial-gradient(circle at 68% 46%, rgba(255, 221, 143, 0.08), transparent 32%),
+    linear-gradient(var(--nf-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nf-grid) 1px, transparent 1px),
+    radial-gradient(circle at 68% 46%, var(--nf-warm-glow), transparent 32%),
     var(--nf-ink);
   background-size: 52px 52px, 52px 52px, auto, auto;
+}
+
+[data-theme="light"] .nf-page {
+  --nf-grid: rgba(49, 43, 34, 0.045);
+  --nf-warm-glow: rgba(154, 116, 46, 0.1);
 }
 
 .nf-glow {
@@ -37,7 +44,7 @@
 .nf-glow--bottom {
   right: -160px;
   bottom: -210px;
-  background: #ffd98a;
+  background: color-mix(in srgb, var(--nf-cream) 70%, #dba84b);
 }
 
 .nf-header,
@@ -110,6 +117,11 @@
 .nf-art-frame {
   position: relative;
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--nf-line);
+  border-radius: clamp(18px, 3vw, 34px);
+  background: #050604;
+  box-shadow: var(--shadow-lg);
 }
 
 .nf-art-frame::after {
@@ -127,7 +139,7 @@
   width: 100%;
   max-height: 68vh;
   object-fit: contain;
-  filter: drop-shadow(0 24px 54px rgba(0,0,0,0.62));
+  filter: drop-shadow(0 24px 54px rgba(0,0,0,0.48));
 }
 
 .nf-copy {
@@ -182,24 +194,25 @@
 
 .nf-button--primary {
   border: 1px solid var(--nf-accent);
-  color: #10140b;
+  color: #fff;
   background: var(--nf-accent);
 }
 
 .nf-button--ghost {
   border: 1px solid var(--nf-line);
   color: var(--nf-cream);
-  background: rgba(255,255,255,0.035);
+  background: var(--surface-soft);
 }
 
 .nf-button--ghost:hover {
-  border-color: rgba(255, 243, 209, 0.4);
+  border-color: var(--border-focus);
+  background: var(--surface-hover);
 }
 
 .nf-footer {
   min-height: 64px;
   border-top: 1px solid var(--nf-line);
-  color: #77766f;
+  color: var(--text-dim);
   font-size: 0.62rem;
 }
 
