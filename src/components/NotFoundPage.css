@@ -140,6 +140,24 @@
   max-height: 68vh;
   object-fit: contain;
   filter: drop-shadow(0 24px 54px rgba(0,0,0,0.48));
+  transition: filter var(--transition-slow), opacity var(--transition-base);
+}
+
+[data-theme="light"] .nf-art-frame {
+  background: #f7f1e3;
+  border-color: rgba(68, 59, 45, 0.18);
+  box-shadow: 0 20px 52px rgba(57, 48, 35, 0.16);
+}
+
+[data-theme="light"] .nf-art {
+  mix-blend-mode: multiply;
+  filter:
+    invert(1)
+    grayscale(0.9)
+    sepia(0.18)
+    saturate(0.78)
+    brightness(1.04)
+    contrast(1.08);
 }
 
 .nf-copy {
