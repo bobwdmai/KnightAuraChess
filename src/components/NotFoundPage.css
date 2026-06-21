@@ -120,7 +120,9 @@
   overflow: hidden;
   border: 1px solid var(--nf-line);
   border-radius: clamp(18px, 3vw, 34px);
-  background: #050604;
+  background:
+    radial-gradient(circle at 55% 48%, rgba(255, 232, 178, 0.055), transparent 58%),
+    var(--bg-panel);
   box-shadow: var(--shadow-lg);
 }
 
@@ -140,24 +142,19 @@
   max-height: 68vh;
   object-fit: contain;
   filter: drop-shadow(0 24px 54px rgba(0,0,0,0.48));
-  transition: filter var(--transition-slow), opacity var(--transition-base);
+  transition: filter var(--transition-slow);
 }
 
 [data-theme="light"] .nf-art-frame {
-  background: #f7f1e3;
+  background:
+    radial-gradient(circle at 55% 48%, rgba(160, 120, 52, 0.07), transparent 58%),
+    #f7f1e3;
   border-color: rgba(68, 59, 45, 0.18);
   box-shadow: 0 20px 52px rgba(57, 48, 35, 0.16);
 }
 
 [data-theme="light"] .nf-art {
-  mix-blend-mode: multiply;
-  filter:
-    invert(1)
-    grayscale(0.9)
-    sepia(0.18)
-    saturate(0.78)
-    brightness(1.04)
-    contrast(1.08);
+  filter: drop-shadow(0 20px 38px rgba(57, 48, 35, 0.14));
 }
 
 .nf-copy {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import notFoundArtwork from '../assets/knight-aura-404.png';
+import notFoundArtwork from '../assets/knight-aura-404-transparent.png';
 import './NotFoundPage.css';
 
 export default function NotFoundPage({ onHome, onPlay }) {
