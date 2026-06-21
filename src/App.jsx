@@ -18,6 +18,7 @@ import {
   BOARD_HAND_TOTAL_MS,
 } from './utils/boardHandAnimation.js';
 import { db, firebaseEnabled } from './utils/firebase.js';
+import { DEFAULT_VARIANT_RULES, normalizeVariantRules } from './utils/variantRules.js';
 import './App.css';
 const UserProfileModal = React.lazy(() => import('./components/UserProfileModal.jsx'));
 
@@ -55,6 +56,15 @@ const TIME_CONTROLS = [
   { label: '30 min', seconds: 1800 },
 ];
 const DEFAULT_TIME_CONTROL = 300;
+const VARIANT_RULES_KEY = 'cr_variant_rules';
+
+const loadVariantRules = () => {
+  try {
+    return normalizeVariantRules(JSON.parse(localStorage.getItem(VARIANT_RULES_KEY) || 'null'));
+  } catch {
+    return { ...DEFAULT_VARIANT_RULES };
+  }
+};
 
 const createNewGame = () => new KnightJumpChess();
 
@@ -157,6 +167,7 @@ export default function App() {
   const [moveTimestamps, setMoveTimestamps] = useState([{ white: 0, black: 0 }]);
   const [currentMoveStartTime, setCurrentMoveStartTime] = useState(Date.now());
   const [selectedTimeControl, setSelectedTimeControl] = useState(DEFAULT_TIME_CONTROL);
+  const [setupVariantRules, setSetupVariantRules] = useState(loadVariantRules);
   const [clockWhite, setClockWhite] = useState(null);
   const [clockBlack, setClockBlack] = useState(null);
   const [localResult, setLocalResult] = useState(null);
@@ -180,6 +191,7 @@ export default function App() {
     aiDifficulty,
     moveTimestamps,
     localResult,
+    variantRules: game.getVariantRules(),
   }), [
     aiDifficulty,
     aiEnabled,
@@ -190,6 +202,10 @@ export default function App() {
     moveTimestamps,
     selectedTimeControl,
   ]);
+
+  useEffect(() => {
+    localStorage.setItem(VARIANT_RULES_KEY, JSON.stringify(setupVariantRules));
+  }, [setupVariantRules]);
   usePracticeState({
     gameId,
     game,
@@ -329,6 +345,7 @@ export default function App() {
     botPool: BOT_POOL,
     displayName,
     incomingChallenge,
+    variantRules: setupVariantRules,
   });
 
   const {
@@ -397,6 +414,7 @@ export default function App() {
     setActiveTab,
     setupModalOpen,
     setSetupModalOpen,
+    setupVariantRules,
   });
 
   const handleEmailAuth = useCallback(async () => {
@@ -712,6 +730,11 @@ export default function App() {
       aiDifficulty,
       aiDifficultyLevels: AI_DIFFICULTY_LEVELS,
       onSelectAiDifficulty: setAiDifficulty,
+      variantRules: setupVariantRules,
+      onToggleVariantRule: (rule) => setSetupVariantRules((current) => ({
+        ...current,
+        [rule]: !current[rule],
+      })),
       onStartPractice: handleStartPracticeFromSetup,
       onStartAi: handleStartAiFromSetup,
       onStartOnline: handleStartOnlineFromSetup,

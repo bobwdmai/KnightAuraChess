@@ -27,7 +27,7 @@ export function usePracticeState({
     if (!raw) return;
     try {
       const saved = JSON.parse(raw);
-      if (saved?.fen) setGame(new KnightJumpChess(saved.fen));
+      if (saved?.fen) setGame(new KnightJumpChess(saved.fen, saved.variantRules));
       if (Array.isArray(saved?.moveHistory)) setMoveHistory(saved.moveHistory);
       if (saved?.lastMove?.from && saved?.lastMove?.to) setLastMove(saved.lastMove);
       if (Number.isFinite(saved?.selectedTimeControl)) setSelectedTimeControl(saved.selectedTimeControl);

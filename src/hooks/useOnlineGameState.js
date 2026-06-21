@@ -108,7 +108,7 @@ export function useOnlineGameState({
               playMoveAnimation(gameRef.current, data.lastMove, actor);
             }
           }
-          setGame(new KnightJumpChess(data.fen));
+          setGame(new KnightJumpChess(data.fen, data.variantRules));
           hasLoadedOnlineGameRef.current = true;
         }
         if (data.lastMove) {

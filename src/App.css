@@ -3644,6 +3644,66 @@ textarea.select {
   margin-top: 16px;
 }
 
+.setup-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.setup-rule-card {
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel-raised);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base), transform var(--transition-fast);
+}
+
+.setup-rule-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.setup-rule-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-bright);
+}
+
+.setup-rule-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: var(--text-bright);
+}
+
+.setup-rule-card__state {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-dim);
+  font: 700 0.62rem/1.4 var(--font-mono);
+  text-transform: uppercase;
+}
+
+.setup-rule-card.active .setup-rule-card__state {
+  background: var(--accent);
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .setup-rule-grid { grid-template-columns: 1fr; }
+}
+
 .setup-modal__actions {
   margin-top: 18px;
   display: grid;

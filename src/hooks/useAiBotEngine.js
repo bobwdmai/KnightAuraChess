@@ -10,6 +10,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import KnightJumpChess from '../KnightJumpChess.js';
+import { normalizeVariantRules, variantRulesKey } from '../utils/variantRules.js';
 
 const GAMES_COLLECTION = 'games';
 const BOT_CHALLENGE_COOLDOWN_MS = 15 * 60 * 1000;
@@ -34,6 +35,7 @@ export function useAiBotEngine({
   botPool,
   displayName,
   incomingChallenge,
+  variantRules,
 }) {
   const [aiThinking, setAiThinking] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -58,10 +60,11 @@ export function useAiBotEngine({
       type: 'search',
       fen,
       difficulty: forceDifficulty ?? aiDifficulty,
+      variantRules: isOnline ? gameData?.variantRules : variantRules,
       id: requestId,
     });
     return true;
-  }, [aiDifficulty]);
+  }, [aiDifficulty, gameData?.variantRules, isOnline, variantRules]);
 
   const handleBotOnlineMove = useCallback(async (moveMsg) => {
     if (!gameId || !db) return;
@@ -75,7 +78,7 @@ export function useAiBotEngine({
         if (data.status !== 'active' || !data.blackId?.startsWith('bot_')) return;
 
         const currentMoveSeq = Number.isFinite(data.moveSeq) ? data.moveSeq : 0;
-        const gameCopy = new KnightJumpChess(data.fen);
+        const gameCopy = new KnightJumpChess(data.fen, data.variantRules);
         if (gameCopy.turn() !== 'b') return;
 
         const moveResult = gameCopy.move({
@@ -203,7 +206,7 @@ export function useAiBotEngine({
         }
 
         setGame((prevGame) => {
-          const gameCopy = new KnightJumpChess(prevGame.fen());
+          const gameCopy = new KnightJumpChess(prevGame.fen(), prevGame.getVariantRules());
           const aiMoveObj = gameCopy
             .moves({ verbose: true })
             .find((move) => move.from === msg.from && move.to === msg.to &&
@@ -239,7 +242,7 @@ export function useAiBotEngine({
           });
           setCurrentMoveStartTime(Date.now());
 
-          return new KnightJumpChess(gameCopy.fen());
+          return new KnightJumpChess(gameCopy.fen(), gameCopy.getVariantRules());
         });
         setAiThinking(false);
       } else if (msg.type === 'error') {
@@ -312,9 +315,12 @@ export function useAiBotEngine({
       }
     }
 
-    const newGame = new KnightJumpChess();
+    const selectedRules = normalizeVariantRules(variantRules);
+    const newGame = new KnightJumpChess(undefined, selectedRules);
     const gameRef = await addDoc(collection(db, GAMES_COLLECTION), {
       rule: 'chessrider',
+      variantRules: selectedRules,
+      variantKey: variantRulesKey(selectedRules),
       status: 'waiting',
       whiteId: selectedBot.uid,
       whiteName: selectedBot.name,
@@ -345,7 +351,7 @@ export function useAiBotEngine({
     });
     localStorage.setItem(BOT_CHALLENGE_LAST_KEY, String(now));
     localStorage.setItem(BOT_CHALLENGE_PENDING_KEY, '1');
-  }, [botPool, db, displayName, gameId, incomingChallenge, selectedTimeControl, user]);
+  }, [botPool, db, displayName, gameId, incomingChallenge, selectedTimeControl, user, variantRules]);
 
   useEffect(() => {
     if (!user || !db || gameId || incomingChallenge) return undefined;

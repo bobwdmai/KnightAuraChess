@@ -30,6 +30,20 @@ test('friendly knights enable jump aura but enemy knights do not', () => {
   assert.equal(friendlyMoves.some((move) => move.flags?.includes('j')), true);
 });
 
+test('knight-jacking lets enemy knights provide jump aura', () => {
+  const game = new KnightJumpChess(undefined, { knightJacking: true });
+  game.clear();
+  game.put({ type: 'r', color: 'w' }, 'a1');
+  game.put({ type: 'p', color: 'b' }, 'b1');
+  game.put({ type: 'n', color: 'b' }, 'a2');
+  game.put({ type: 'k', color: 'w' }, 'e1');
+  game.put({ type: 'k', color: 'b' }, 'e8');
+
+  const moves = game.moves({ square: 'a1', verbose: true });
+  assert.equal(game.isNearKnight('a1', 'w'), true);
+  assert.equal(moves.some((move) => move.flags?.includes('j')), true);
+});
+
 test('knight aura lookup follows the current board state', () => {
   const game = new KnightJumpChess();
   game.clear();

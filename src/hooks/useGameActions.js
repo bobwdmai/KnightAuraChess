@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import KnightJumpChess from '../KnightJumpChess.js';
 import { moveApiEnabled, moveApiStrict, submitAuthoritativeMove } from '../utils/moveApi.js';
+import { normalizeVariantRules, variantRulesKey } from '../utils/variantRules.js';
 
 const GAMES_COLLECTION = 'games';
 const RULE_ID = 'chessrider';
@@ -66,6 +67,7 @@ export function useGameActions({
   incomingChallenge,
   setActiveTab,
   setSetupModalOpen,
+  setupVariantRules,
 }) {
   function calculateElo(playerRating, opponentRating, score, kFactor = 32) {
     const expected = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
@@ -84,7 +86,7 @@ export function useGameActions({
 
   const resetPractice = useCallback(() => {
     cancelAiSearch?.();
-    const newGame = new KnightJumpChess();
+    const newGame = new KnightJumpChess(undefined, setupVariantRules);
     setGame(newGame);
     setMoveHistory([]);
     setSelectedSquare(null);
@@ -107,6 +109,7 @@ export function useGameActions({
     setMoveTimestamps,
     setPendingPromotion,
     setSelectedSquare,
+    setupVariantRules,
   ]);
 
   const closeSetupModal = useCallback(() => setSetupModalOpen(false), [setSetupModalOpen]);
@@ -141,6 +144,7 @@ export function useGameActions({
       waitingSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         if (data.whiteId === user.uid) return;
+        if ((data.variantKey || 'base') !== variantRulesKey(setupVariantRules)) return;
         const hostRating = data.whiteRating ?? 1200;
         const diff = Math.abs(hostRating - rating);
         if (diff < bestDiff) {
@@ -167,9 +171,12 @@ export function useGameActions({
         setMatchStatus('waiting');
         return;
       }
-      const newGame = new KnightJumpChess();
+      const variantRules = normalizeVariantRules(setupVariantRules);
+      const newGame = new KnightJumpChess(undefined, variantRules);
       const docRef = await addDoc(gamesRef, {
         rule: RULE_ID,
+        variantRules,
+        variantKey: variantRulesKey(variantRules),
         status: 'waiting',
         whiteId: user.uid,
         whiteName: displayName,
@@ -194,15 +201,18 @@ export function useGameActions({
       setMatchError(error.message || 'Matchmaking failed');
       setMatchStatus('idle');
     }
-  }, [db, displayName, rating, selectedTimeControl, setGameId, setMatchError, setMatchStatus, user]);
+  }, [db, displayName, rating, selectedTimeControl, setGameId, setMatchError, setMatchStatus, setupVariantRules, user]);
 
   const createCustomGame = useCallback(async () => {
     if (!user) return;
     setMatchError('');
     try {
-      const newGame = new KnightJumpChess();
+      const variantRules = normalizeVariantRules(setupVariantRules);
+      const newGame = new KnightJumpChess(undefined, variantRules);
       const docRef = await addDoc(collection(db, GAMES_COLLECTION), {
         rule: RULE_ID,
+        variantRules,
+        variantKey: variantRulesKey(variantRules),
         status: 'waiting',
         whiteId: user.uid,
         whiteName: displayName,
@@ -226,7 +236,7 @@ export function useGameActions({
     } catch (error) {
       setMatchError(error.message || 'Failed to create game');
     }
-  }, [db, displayName, rating, selectedTimeControl, setGameId, setMatchError, setMatchStatus, user]);
+  }, [db, displayName, rating, selectedTimeControl, setGameId, setMatchError, setMatchStatus, setupVariantRules, user]);
 
   const joinCustomGame = useCallback(async (targetId) => {
     if (!user) return;
@@ -337,9 +347,12 @@ export function useGameActions({
     if (!user || !firebaseEnabled || !db) return;
     setMatchError('');
     try {
-      const newGame = new KnightJumpChess();
+      const variantRules = normalizeVariantRules(setupVariantRules);
+      const newGame = new KnightJumpChess(undefined, variantRules);
       const gameRefDoc = await addDoc(collection(db, GAMES_COLLECTION), {
         rule: RULE_ID,
+        variantRules,
+        variantKey: variantRulesKey(variantRules),
         status: 'waiting',
         whiteId: user.uid,
         whiteName: displayName,
@@ -373,7 +386,7 @@ export function useGameActions({
     } catch (error) {
       setMatchError(error.message || 'Failed to send challenge');
     }
-  }, [db, displayName, firebaseEnabled, rating, selectedTimeControl, setActiveTab, setGameId, setMatchError, setMatchStatus, user]);
+  }, [db, displayName, firebaseEnabled, rating, selectedTimeControl, setActiveTab, setGameId, setMatchError, setMatchStatus, setupVariantRules, user]);
 
   const acceptChallenge = useCallback(async () => {
     if (!incomingChallenge || !user || !db) return;
@@ -509,7 +522,7 @@ export function useGameActions({
   }, [isOnline, resetPractice, setAiEnabled, setSetupModalOpen, startMatchmaking, user]);
 
   const handleLocalMove = useCallback(async (moveObj) => {
-    const gameCopy = new KnightJumpChess(game.fen());
+    const gameCopy = new KnightJumpChess(game.fen(), game.getVariantRules());
     playMoveAnimation(game, moveObj, 'self');
     gameCopy.move(moveObj);
     setGame(gameCopy);
@@ -600,7 +613,7 @@ export function useGameActions({
           data.whiteId === user.uid ? 'w' : data.blackId === user.uid ? 'b' : null;
         if (!currentPlayerColor) throw new Error('You are not part of this game');
 
-        const gameCopy = new KnightJumpChess(data.fen);
+        const gameCopy = new KnightJumpChess(data.fen, data.variantRules);
         if (gameCopy.turn() !== currentPlayerColor) throw new Error('Not your turn');
 
         const moveResult = gameCopy.move({
@@ -609,7 +622,7 @@ export function useGameActions({
           promotion: moveObj.promotion || 'q'
         });
         if (!moveResult) throw new Error('Illegal move');
-        playMoveAnimation(new KnightJumpChess(data.fen), moveResult, 'self');
+        playMoveAnimation(new KnightJumpChess(data.fen, data.variantRules), moveResult, 'self');
 
         const newHistory = [
           ...(data.moveHistory || []),
@@ -787,14 +800,17 @@ export function useGameActions({
     if (selectedSquare === null) {
       const piecesOnSquare = game.get(square);
       if (piecesOnSquare && piecesOnSquare.color === game.turn()) {
-        setSelectedSquare(square);
         const moves = game.moves({ square, verbose: true }).map((m) => m.to);
-        setLegalMoves(moves);
+        if (moves.length > 0) {
+          setSelectedSquare(square);
+          setLegalMoves(moves);
+        }
       }
       return;
     }
 
     if (selectedSquare === square) {
+      if (game.getVariantRules().touchPiece) return;
       setSelectedSquare(null);
       setLegalMoves([]);
       return;
@@ -830,11 +846,14 @@ export function useGameActions({
       setLegalMoves([]);
       setPendingPromotion(null);
     } else {
+      if (game.getVariantRules().touchPiece) return;
       const piecesOnSquare = game.get(square);
       if (piecesOnSquare && piecesOnSquare.color === game.turn()) {
-        setSelectedSquare(square);
         const moves = game.moves({ square, verbose: true }).map((m) => m.to);
-        setLegalMoves(moves);
+        if (moves.length > 0) {
+          setSelectedSquare(square);
+          setLegalMoves(moves);
+        }
       } else {
         setSelectedSquare(null);
         setLegalMoves([]);

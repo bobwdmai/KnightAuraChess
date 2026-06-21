@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { normalizeVariantRules } from './utils/variantRules.js';
 
 /**
  * Knight Jump Chess Variant
@@ -12,10 +13,21 @@ import { Chess } from 'chess.js';
  */
 
 class KnightJumpChess extends Chess {
-  constructor(fen) {
+  constructor(fen, variantRules) {
     super();
+    this._variantRules = normalizeVariantRules(variantRules);
     this._knightAuraSquaresByColor = null;
     if (fen) this.load(fen, { skipValidation: true });
+  }
+
+  getVariantRules() {
+    return { ...this._variantRules };
+  }
+
+  setVariantRules(variantRules) {
+    this._variantRules = normalizeVariantRules(variantRules);
+    this._knightAuraSquaresByColor = null;
+    return this;
   }
 
   /**
@@ -97,7 +109,9 @@ class KnightJumpChess extends Chess {
    * @returns {boolean}
    */
   isNearKnight(square, color) {
-    return this._getKnightAuraSquaresByColor(color).has(square);
+    if (this._getKnightAuraSquaresByColor(color).has(square)) return true;
+    if (!this._variantRules?.knightJacking) return false;
+    return this._getKnightAuraSquaresByColor(color === 'w' ? 'b' : 'w').has(square);
   }
 
   _getKnightAuraSquaresByColor(color) {
@@ -187,7 +201,7 @@ class KnightJumpChess extends Chess {
    * Unified safety check to avoid redundant instance creation
    */
   _isMoveSafe(move, moverColor, isJump) {
-    const copy = new KnightJumpChess(this.fen());
+    const copy = new KnightJumpChess(this.fen(), this._variantRules);
     if (isJump) {
       if (!copy.makeJumpMove(move)) return false;
     } else {
@@ -639,14 +653,14 @@ class KnightJumpChess extends Chess {
   }
 
   _isStandardMoveSafe(moveObj, moverColor) {
-    const copy = new KnightJumpChess(this.fen());
+    const copy = new KnightJumpChess(this.fen(), this._variantRules);
     copy._makeMove(moveObj);
     copy._incPositionCount();
     return !copy.isKingCapturable(moverColor);
   }
 
   _isJumpMoveSafe(move, moverColor) {
-    const copy = new KnightJumpChess(this.fen());
+    const copy = new KnightJumpChess(this.fen(), this._variantRules);
     const result = copy.makeJumpMove(move);
     if (!result) return false;
     return !copy.isKingCapturable(moverColor);
@@ -694,7 +708,7 @@ class KnightJumpChess extends Chess {
     if (!kingSquare) return true;
 
     const opponent = color === 'w' ? 'b' : 'w';
-    const temp = new KnightJumpChess(this.fen());
+    const temp = new KnightJumpChess(this.fen(), this._variantRules);
     temp._turn = opponent;
     const opponentMoves = temp.movesUnsafe({ verbose: true });
     return opponentMoves.some(move => move.to === kingSquare);
