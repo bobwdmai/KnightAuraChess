@@ -36,6 +36,7 @@ export default function ChessBoard({
   customThemeVars,
   boardCornerRadius,
   pieceStyle,
+  showEmpoweredMarks = true,
   lastMove,
   flipped,
   inCheck,
@@ -77,7 +78,7 @@ export default function ChessBoard({
       for (const f of filesBase) {
         const sq = `${f}${r}`;
         const piece = game.get(sq);
-        if (!piece || piece.type === 'n') continue;
+        if (!piece) continue;
         if (game.isNearKnight(sq, piece.color)) {
           auraSquares.add(sq);
         }
@@ -178,7 +179,7 @@ export default function ChessBoard({
                 const isLastTo = lastMove && lastMove.to === square;
                 const isCheck = checkSquare === square;
                 const isAura = knightAuraSquares.has(square) && selectedSquare;
-                const isAuraPiece = auraPieceSquares.has(square);
+                const isAuraPiece = showEmpoweredMarks && auraPieceSquares.has(square);
 
                 const squareClass = [
                   'square',

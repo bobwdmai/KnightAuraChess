@@ -34,6 +34,9 @@ export function usePersistentPreferences() {
   const [boardCornerRadius, setBoardCornerRadius] = useState(() => getInitialBoardCornerRadius());
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cr_dark') !== 'false');
   const [pieceStyle, setPieceStyle] = useState('svg');
+  const [showEmpoweredMarks, setShowEmpoweredMarks] = useState(
+    () => localStorage.getItem('cr_empowered_marks') !== 'false'
+  );
   const [liveVoiceChat, setLiveVoiceChat] = useState(() => localStorage.getItem('cr_live_voice_chat') === 'true');
   const [seasonalDecorations, setSeasonalDecorations] = useState(
     () => localStorage.getItem('cr_seasonal_decorations') !== 'false'
@@ -57,6 +60,9 @@ export function usePersistentPreferences() {
   useEffect(() => {
     localStorage.setItem('cr_board_corner_radius', String(boardCornerRadius));
   }, [boardCornerRadius]);
+  useEffect(() => {
+    localStorage.setItem('cr_empowered_marks', showEmpoweredMarks ? 'true' : 'false');
+  }, [showEmpoweredMarks]);
   useEffect(() => { localStorage.setItem('cr_live_voice_chat', liveVoiceChat ? 'true' : 'false'); }, [liveVoiceChat]);
   useEffect(() => {
     localStorage.setItem('cr_seasonal_decorations', seasonalDecorations ? 'true' : 'false');
@@ -104,6 +110,8 @@ export function usePersistentPreferences() {
     setDarkMode,
     pieceStyle,
     setPieceStyle,
+    showEmpoweredMarks,
+    setShowEmpoweredMarks,
     liveVoiceChat,
     setLiveVoiceChat,
     seasonalDecorations,
