@@ -14,7 +14,7 @@ export async function onRequestOptions() {
 }
 
 export async function onRequestPost(context) {
-  const workersAi = context.env.AI;
+  const workersAi = context.env.knightaurachess || context.env.AI;
   const upstreamUrl = context.env.TEXT_AI_UPSTREAM_URL;
   if (!workersAi && !upstreamUrl) {
     return json(
