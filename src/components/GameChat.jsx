@@ -14,6 +14,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../utils/firebase.js';
+import { getBotPersona, requestTextAiReply } from '../utils/textAi.js';
 
 const rtcConfig = {
   iceServers: [
@@ -53,6 +54,7 @@ export default function GameChat({
   currentUserName,
   liveVoiceChat = false,
   playerColor,
+  chatParticipant = null,
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -61,6 +63,7 @@ export default function GameChat({
   const [micMuted, setMicMuted] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState('Voice chat off');
   const [voiceError, setVoiceError] = useState('');
+  const [replyPending, setReplyPending] = useState(false);
   const bottomRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -467,7 +470,7 @@ export default function GameChat({
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || !currentUser) return;
+    if (!text || !currentUser || replyPending) return;
     setInput('');
     await addDoc(collection(db, 'games', gameId, 'messages'), {
       uid: currentUser.uid,
@@ -475,6 +478,41 @@ export default function GameChat({
       text,
       createdAt: serverTimestamp(),
     });
+
+    if (!chatParticipant?.uid) return;
+
+    setReplyPending(true);
+    try {
+      const persona = getBotPersona(chatParticipant.uid, chatParticipant.name);
+      const history = [
+        ...messages,
+        { uid: currentUser.uid, text },
+      ].slice(-20).map((message) => ({
+        role: (message.speakerUid || message.uid) === chatParticipant.uid ? 'assistant' : 'user',
+        content: message.text,
+      }));
+      const reply = await requestTextAiReply({
+        history,
+        personaName: persona.name,
+        personaAge: persona.age,
+        personaStyle: persona.style,
+        conversationContext: 'You are chatting with your opponent during a chess game. Keep replies natural, relevant, and under 160 characters. Do not give engine analysis unless asked.',
+        maxTokens: 100,
+      });
+
+      await addDoc(collection(db, 'games', gameId, 'messages'), {
+        // The signed-in participant authors the hosted reply; speakerUid controls its presentation.
+        uid: currentUser.uid,
+        speakerUid: chatParticipant.uid,
+        displayName: chatParticipant.name,
+        text: reply.slice(0, 200),
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.warn('Game chat reply failed:', error?.message || error);
+    } finally {
+      setReplyPending(false);
+    }
   };
 
   const handleVoiceToggle = async () => {
@@ -492,7 +530,8 @@ export default function GameChat({
     <div className="game-chat">
       <div className="game-chat__header">
         <span>Game Chat</span>
-        {liveVoiceChat && <span className="game-chat__mode">Peer Voice</span>}
+        {replyPending && <span className="game-chat__mode">Opponent is typing</span>}
+        {!replyPending && liveVoiceChat && <span className="game-chat__mode">Peer Voice</span>}
       </div>
       {liveVoiceChat && (
         <div className="game-chat__voice-panel">
@@ -533,15 +572,18 @@ export default function GameChat({
         {messages.length === 0 && (
           <span className="game-chat__empty">No messages yet. Say hello!</span>
         )}
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`game-chat__message${msg.uid === currentUser?.uid ? ' game-chat__message--own' : ''}`}
-          >
-            <span className="game-chat__message-name">{msg.displayName}:</span>
-            <span className="game-chat__message-text">{msg.text}</span>
-          </div>
-        ))}
+        {messages.map((msg) => {
+          const speakerUid = msg.speakerUid || msg.uid;
+          return (
+            <div
+              key={msg.id}
+              className={`game-chat__message${speakerUid === currentUser?.uid ? ' game-chat__message--own' : ''}`}
+            >
+              <span className="game-chat__message-name">{msg.displayName}:</span>
+              <span className="game-chat__message-text">{msg.text}</span>
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
       <div className="game-chat__input-row">
@@ -554,7 +596,7 @@ export default function GameChat({
           placeholder="Type a message..."
           maxLength={200}
         />
-        <button className="btn btn-primary" onClick={handleSend} disabled={!input.trim()}>
+        <button className="btn btn-primary" onClick={handleSend} disabled={!input.trim() || replyPending}>
           Send
         </button>
       </div>

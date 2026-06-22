@@ -55,6 +55,12 @@ export default function BoardShell({
   liveVoiceChat,
   setupModalProps,
 }) {
+  const chatParticipant = gameData
+    ? [
+      { uid: gameData.whiteId, name: gameData.whiteName || 'White' },
+      { uid: gameData.blackId, name: gameData.blackName || 'Black' },
+    ].find((player) => player.uid?.startsWith?.('bot_')) || null
+    : null;
   const connectionLabel = connectionState === 'live'
     ? 'Live'
     : connectionState === 'reconnecting'
@@ -183,8 +189,9 @@ export default function BoardShell({
             gameId={gameId}
             currentUser={user}
             currentUserName={displayName}
-            liveVoiceChat={liveVoiceChat}
+            liveVoiceChat={liveVoiceChat && !chatParticipant}
             playerColor={playerColor}
+            chatParticipant={chatParticipant}
           />
         </Suspense>
       )}
