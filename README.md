@@ -177,7 +177,7 @@ TEXT_AI_MODEL="@cf/meta/llama-3-8b-instruct"
 ```
 
 Route:
-- `functions/api/text-ai.js` can call Cloudflare Workers AI directly through an `AI` binding.
+- `functions/api/text-ai.js` calls Cloudflare Workers AI through the `knightaurachess` binding declared in `wrangler.toml`.
 
 For production builds you can still override explicitly:
 
@@ -186,8 +186,10 @@ VITE_TEXT_AI_BASE_URL="/api/text-ai"
 ```
 
 Cloudflare deployment notes:
-- Add an AI binding named `AI` in your Cloudflare Pages project or Worker.
-- In Cloudflare Pages, add the Workers AI binding from the dashboard and redeploy.
+- The repo is pre-configured for Cloudflare Pages with `wrangler.toml`.
+- Workers AI binding name: `knightaurachess`.
+- GitHub Actions includes a manual **Deploy to Cloudflare Pages** workflow. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets, then run that workflow.
+- In Cloudflare Pages, confirm the Workers AI binding exists and redeploy if you configure it from the dashboard.
 - If you prefer a proxy to another hosted LLM instead of Workers AI, keep `TEXT_AI_UPSTREAM_URL` and `TEXT_AI_UPSTREAM_AUTH_BEARER` configured as a fallback.
 
 ## 🚀 Deployment (Cloudflare Pages)
@@ -198,5 +200,28 @@ This project is configured for seamless deployment via Cloudflare Pages:
 2. **Build command:** `npx vite build`
 3. **Build directory:** `dist`
 4. **Environment Variables:** Add all the `VITE_FIREBASE_*` variables from your `.env` file into the Cloudflare Pages settings.
+5. **Workers AI binding:** Add a Workers AI binding named `knightaurachess`.
 
-Cloudflare will automatically build and deploy your app every time you push to the `main` branch!
+Manual Cloudflare setup:
+
+1. Open Cloudflare Dashboard.
+2. Go to **Workers & Pages**.
+3. Open the **knightaurachess** Pages project.
+4. Go to **Settings**.
+5. Go to **Bindings**.
+6. Add a **Workers AI** binding.
+7. Set **Variable name** to `knightaurachess`.
+8. Save.
+9. Go to **Deployments**.
+10. Redeploy the latest production deployment.
+
+GitHub Actions setup:
+
+1. In GitHub, open the repository settings.
+2. Go to **Secrets and variables** → **Actions**.
+3. Add `CLOUDFLARE_ACCOUNT_ID`.
+4. Add `CLOUDFLARE_API_TOKEN` with Cloudflare Pages deploy permission.
+5. Open **Actions** → **Deploy to Cloudflare Pages**.
+6. Click **Run workflow**.
+
+If the Cloudflare Pages project is connected to GitHub, Cloudflare can automatically build and deploy on each `main` push. If you use the included GitHub Action instead, run **Deploy to Cloudflare Pages** manually after changing deployment secrets or Cloudflare config.
