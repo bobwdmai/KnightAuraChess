@@ -63,9 +63,13 @@ FIREBASE_WEB_API_KEY=
 FIREBASE_SERVICE_ACCOUNT_EMAIL=
 FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY=
 
+TEXT_AI_MODEL=@cf/meta/llama-3-8b-instruct
 TEXT_AI_UPSTREAM_URL=
 TEXT_AI_UPSTREAM_AUTH_BEARER=
 ```
+
+Cloudflare bindings:
+- Workers AI binding name: `knightaurachess`
 
 ## Secrets (Do Not Commit Tokens)
 
