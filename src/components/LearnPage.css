@@ -215,6 +215,83 @@
   background:
     linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,241,232,0.9));
 }
+
+[data-theme="light"] .lp-page {
+  background:
+    radial-gradient(circle at 10% 6%, rgba(125, 196, 53, 0.1), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgba(218, 160, 64, 0.09), transparent 26rem),
+    linear-gradient(180deg, #fffaf1, #f7efe2);
+}
+
+[data-theme="light"] .lp-aura-board-wrap,
+[data-theme="light"] .lp-scenario-stage,
+[data-theme="light"] .lp-scenario-side,
+[data-theme="light"] .lp-puzzle,
+[data-theme="light"] .lp-gloss,
+[data-theme="light"] .lp-outro {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(125,196,53,0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,240,222,0.94));
+  border-color: rgba(98, 78, 48, 0.14);
+  box-shadow: 0 16px 36px rgba(76, 58, 34, 0.1);
+}
+
+[data-theme="light"] .lp-hero-lede,
+[data-theme="light"] .lp-diorama-copy p,
+[data-theme="light"] .lp-scenario-intro,
+[data-theme="light"] .lp-step-desc,
+[data-theme="light"] .lp-puzzle-hint,
+[data-theme="light"] .lp-gloss p,
+[data-theme="light"] .lp-outro-text {
+  color: #5f5345;
+}
+
+[data-theme="light"] .lp-tab,
+[data-theme="light"] .lp-step,
+[data-theme="light"] .lp-choice,
+[data-theme="light"] .lp-scrub-btn,
+[data-theme="light"] .lp-btn-ghost {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,238,220,0.92));
+  border-color: rgba(98, 78, 48, 0.14);
+  color: #2a241a;
+}
+
+.lp-tab,
+.lp-choice,
+.lp-scrub-btn,
+.lp-btn-primary,
+.lp-btn-ghost {
+  min-height: 36px;
+}
+
+.lp-scrub-btn:disabled {
+  opacity: 0.62;
+}
+
+[data-theme="light"] .lp-scrub-btn:disabled {
+  opacity: 1;
+  color: #9a8c78;
+  background: rgba(239, 229, 211, 0.78);
+}
+
+[data-theme="light"] .lp-hero h1,
+[data-theme="light"] .lp-diorama-copy h3,
+[data-theme="light"] .lp-section-head h2,
+[data-theme="light"] .lp-scenario-title,
+[data-theme="light"] .lp-scenario-h,
+[data-theme="light"] .lp-puzzle-q,
+[data-theme="light"] .lp-gloss h4 {
+  color: #1e160b;
+}
+
+[data-theme="light"] .lp-hero-eyebrow,
+[data-theme="light"] .lp-section-num,
+[data-theme="light"] .lp-pill,
+[data-theme="light"] .lp-puzzle-tag,
+[data-theme="light"] .lp-gloss-mark {
+  color: #3f7512;
+}
 .lp-section-num {
   font-family: var(--font-mono);
   font-size: 0.74rem;

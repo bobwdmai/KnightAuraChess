@@ -230,6 +230,25 @@
     linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,241,232,0.9));
 }
 
+[data-theme="light"] .nf-page {
+  background:
+    linear-gradient(var(--nf-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nf-grid) 1px, transparent 1px),
+    radial-gradient(circle at 68% 46%, rgba(154, 116, 46, 0.12), transparent 32%),
+    linear-gradient(180deg, #fffaf1, #f7efe2);
+}
+
+[data-theme="light"] .nf-brand,
+[data-theme="light"] .nf-copy h1 {
+  color: #161109;
+}
+
+[data-theme="light"] .nf-copy > p:not(.nf-eyebrow),
+[data-theme="light"] .nf-header__code,
+[data-theme="light"] .nf-footer {
+  color: #675b49;
+}
+
 .nf-button--ghost:hover {
   border-color: var(--border-focus);
   background: var(--surface-hover);

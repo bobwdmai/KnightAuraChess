@@ -139,6 +139,40 @@
 [data-theme="light"] .uptime-back-btn {
   border-color: rgba(82, 70, 53, 0.14);
 }
+
+[data-theme="light"] .uptime-page {
+  background:
+    radial-gradient(circle at 10% 6%, rgba(125, 196, 53, 0.1), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgba(218, 160, 64, 0.09), transparent 26rem),
+    linear-gradient(180deg, #fffaf1, #f7efe2);
+}
+
+[data-theme="light"] .uptime-header,
+[data-theme="light"] .uptime-card {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(125,196,53,0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,240,222,0.94));
+  border-color: rgba(98, 78, 48, 0.14);
+}
+
+[data-theme="light"] .uptime-meta,
+[data-theme="light"] .uptime-card-meta,
+[data-theme="light"] .uptime-header-title p {
+  color: #5f5345;
+}
+
+[data-theme="light"] .uptime-header-title h1,
+[data-theme="light"] .uptime-card-label {
+  color: #1e160b;
+}
+
+[data-theme="light"] .uptime-refresh-btn {
+  color: #675b49;
+}
+
+[data-theme="light"] .uptime-refresh-btn:hover {
+  color: #1e160b;
+}
 .uptime-card-ok       { border-left-color: var(--success); }
 .uptime-card-degraded { border-left-color: #c8902a; }
 .uptime-card-down     { border-left-color: var(--danger); }

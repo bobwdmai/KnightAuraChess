@@ -46,7 +46,7 @@ function getGameSummary(game, userId) {
   }
 
   if (status === 'abandoned' && !game.winner) {
-    return { result: 'Abandoned', className: 'draw', opponentName };
+    return { result: 'Abandoned', className: 'abandoned', opponentName };
   }
 
   if (!game.winner) {
