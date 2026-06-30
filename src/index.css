@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 *, *::before, *::after {
   margin: 0;
@@ -20,6 +20,8 @@
   --surface-hover:    rgba(255,255,255,0.08);
   --surface-inset:    rgba(0,0,0,0.26);
   --surface-glass:    rgba(15,14,13,0.9);
+  --surface-card:     linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018));
+  --surface-aura:     radial-gradient(circle at 12% 0%, rgba(125,196,53,0.16), transparent 36%);
 
   /* ── Text ── */
   --text-primary:     #c4c1bc;
@@ -51,6 +53,7 @@
   --shadow-md:        0 4px 16px rgba(0,0,0,0.5);
   --shadow-lg:        0 12px 40px rgba(0,0,0,0.65);
   --shadow-board:     0 0 0 1px rgba(0,0,0,0.5), 0 8px 48px rgba(0,0,0,0.7);
+  --shadow-lift:      0 18px 46px rgba(0,0,0,0.3);
 
   /* ── Radii ── */
   --radius-xs:        3px;
@@ -60,7 +63,8 @@
   --radius-xl:        20px;
 
   /* ── Typography ── */
-  --font-body:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:        'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display:     'Fraunces', Georgia, serif;
   --font-mono:        'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   /* ── Transitions ── */
@@ -83,6 +87,8 @@
   --surface-hover:    rgba(55,46,35,0.095);
   --surface-inset:    rgba(55,46,35,0.07);
   --surface-glass:    rgba(255,255,255,0.88);
+  --surface-card:     linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,239,231,0.9));
+  --surface-aura:     radial-gradient(circle at 12% 0%, rgba(79,133,25,0.12), transparent 38%);
 
   /* ── Text ── */
   --text-primary:     #2c2a27;
@@ -108,6 +114,7 @@
   --shadow-md:        0 4px 16px rgba(0,0,0,0.15);
   --shadow-lg:        0 12px 40px rgba(0,0,0,0.2);
   --shadow-board:     0 0 0 1px rgba(0,0,0,0.15), 0 8px 48px rgba(0,0,0,0.2);
+  --shadow-lift:      0 18px 44px rgba(67, 56, 40, 0.16);
 }
 
 [data-theme="light"] ::-webkit-scrollbar-thumb { background: #c8c5c1; }
@@ -115,7 +122,10 @@
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-body);
+  background:
+    radial-gradient(circle at 8% 8%, rgba(125, 196, 53, 0.06), transparent 28rem),
+    radial-gradient(circle at 92% 12%, rgba(219, 168, 75, 0.05), transparent 24rem),
+    var(--bg-body);
   color: var(--text-primary);
   min-height: 100vh;
   font-size: 14px;

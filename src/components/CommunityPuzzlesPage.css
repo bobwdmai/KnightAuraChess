@@ -1,6 +1,7 @@
 .cp-page {
   min-height: 100vh;
   background:
+    radial-gradient(circle at 12% 10%, rgba(219, 168, 75, 0.06), transparent 28rem),
     radial-gradient(ellipse 75% 36% at 50% 0%, rgba(125, 196, 53, 0.08), transparent 70%),
     var(--bg-body);
 }
@@ -32,11 +33,12 @@
 .cp-hero__stats,
 .cp-panel {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 24px;
   background:
+    var(--surface-aura),
     linear-gradient(180deg, var(--surface-soft), transparent),
     var(--bg-panel);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lift);
 }
 
 .cp-hero__copy {
@@ -48,7 +50,7 @@
   color: var(--text-bright);
   font-size: clamp(2rem, 4vw, 3.5rem);
   line-height: 1.05;
-  letter-spacing: 0;
+  letter-spacing: -0.035em;
 }
 
 .cp-hero__lede {
@@ -73,8 +75,10 @@
 
 .cp-stat {
   padding: 18px;
-  border-radius: var(--radius-md);
-  background: var(--surface-soft);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012)),
+    var(--surface-soft);
   border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -140,13 +144,21 @@
 
 .cp-filter-btn {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)),
+    var(--surface-soft);
   color: var(--text-muted);
   padding: 8px 11px;
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), background var(--transition-base);
+}
+
+.cp-filter-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-subtle));
 }
 
 .cp-filter-btn.active {
@@ -170,8 +182,10 @@
 .cp-featured-tile {
   text-align: left;
   border: 1px solid rgba(125,196,53,0.28);
-  border-radius: var(--radius-md);
-  background: rgba(125,196,53,0.08);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(213, 244, 135, 0.16), transparent 58%),
+    rgba(125,196,53,0.08);
   color: var(--text-bright);
   padding: 12px;
   cursor: pointer;
@@ -194,11 +208,13 @@
 
 .cp-card {
   padding: 18px;
-  border-radius: var(--radius-lg);
+  border-radius: 22px;
   border: 1px solid var(--border-subtle);
   background:
+    radial-gradient(circle at 0% 0%, rgba(125,196,53,0.1), transparent 34%),
     linear-gradient(180deg, var(--surface-soft), transparent),
     var(--bg-panel-raised);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.16);
 }
 
 .cp-card.is-solved {
@@ -311,8 +327,10 @@
   align-items: start;
   padding: 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-panel-raised);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012)),
+    var(--bg-panel-raised);
 }
 
 .cp-builder-board {
@@ -350,9 +368,17 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.012)),
+    var(--surface-soft);
   cursor: pointer;
+  transition: transform var(--transition-base), border-color var(--transition-base), background var(--transition-base);
+}
+
+.cp-piece-btn:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-subtle));
 }
 
 .cp-piece-btn.active {
@@ -449,6 +475,22 @@
 .cp-input,
 .cp-textarea {
   width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012)),
+    var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  padding: 9px 11px;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.cp-input:focus,
+.cp-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(90,144,32,0.14);
+  outline: none;
 }
 
 .cp-textarea {
@@ -512,9 +554,11 @@
   height: 30px;
   display: inline-grid;
   place-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   border: 1px solid var(--border-subtle);
-  background: var(--surface-soft);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.012)),
+    var(--surface-soft);
   color: var(--text-dim);
   font-size: 0.92rem;
   cursor: pointer;
@@ -529,6 +573,23 @@
 .cp-rate-btn:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+[data-theme="light"] .cp-hero__copy,
+[data-theme="light"] .cp-hero__stats,
+[data-theme="light"] .cp-panel,
+[data-theme="light"] .cp-card,
+[data-theme="light"] .cp-builder,
+[data-theme="light"] .cp-stat,
+[data-theme="light"] .cp-featured-tile {
+  border-color: rgba(82, 70, 53, 0.12);
+}
+
+[data-theme="light"] .cp-input,
+[data-theme="light"] .cp-textarea {
+  background: rgba(255,255,255,0.94);
+  border-color: rgba(82, 70, 53, 0.16);
+  color: #211d16;
 }
 
 .cp-card__actions {

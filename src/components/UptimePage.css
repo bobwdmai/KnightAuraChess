@@ -1,6 +1,8 @@
 .uptime-page {
   min-height: 100vh;
-  background: var(--bg-body);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(125, 196, 53, 0.07), transparent 28rem),
+    var(--bg-body);
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
@@ -12,15 +14,19 @@
   align-items: center;
   gap: 16px;
   padding: 14px 24px;
-  background: var(--surface-glass);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.012)),
+    var(--surface-glass);
   border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: blur(12px);
 }
 
 .uptime-back-btn {
   padding: 7px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.012)),
+    var(--surface-soft);
   color: var(--text-bright);
   border: 1px solid var(--border);
   cursor: pointer;
@@ -118,11 +124,20 @@
 }
 
 .uptime-card {
-  background: var(--bg-panel);
+  background:
+    var(--surface-aura),
+    var(--surface-card),
+    var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 18px;
   padding: 16px 18px;
   border-left-width: 3px;
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .uptime-card,
+[data-theme="light"] .uptime-back-btn {
+  border-color: rgba(82, 70, 53, 0.14);
 }
 .uptime-card-ok       { border-left-color: var(--success); }
 .uptime-card-degraded { border-left-color: #c8902a; }
