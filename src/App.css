@@ -3370,6 +3370,7 @@ textarea.select {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
+  font-family: var(--font-mono);
 }
 
 .leaderboard-list {
@@ -3395,7 +3396,7 @@ textarea.select {
   cursor: pointer;
   text-align: left;
   transition: background var(--transition-fast);
-  font-family: inherit;
+  font-family: var(--font-body);
   font-size: 0.83rem;
   border-radius: var(--radius-sm);
   margin: 1px 0;
