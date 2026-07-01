@@ -3369,6 +3369,7 @@ textarea.select {
   border-right: none;
   background: transparent;
   overflow-y: visible;
+  padding-inline: 8px 4px;
 }
 
 .leaderboard-header {
@@ -3378,17 +3379,17 @@ textarea.select {
 }
 
 .leaderboard-panel[data-embedded] .leaderboard-header {
-  padding: 0 0 10px 0;
+  padding: 4px 4px 10px;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 4px;
 }
 
 .leaderboard-title {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-dim);
   font-family: var(--font-mono);
 }

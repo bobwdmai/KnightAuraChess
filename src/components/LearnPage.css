@@ -265,6 +265,7 @@
 .lp-btn-ghost {
   font-family: var(--font-body);
   min-height: 36px;
+  line-height: 1.2;
 }
 
 .lp-scrub-btn:disabled {
@@ -556,7 +557,7 @@
 .lp-step-body { padding-top: 2px; }
 .lp-step-title {
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin-bottom: 2px;
 }
