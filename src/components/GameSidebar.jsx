@@ -49,6 +49,8 @@ export default function GameSidebar({
         {tabs.map((tab) => (
           <button
             key={tab.key}
+            type="button"
+            aria-label={tab.label}
             className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.key)}
           >
@@ -60,6 +62,8 @@ export default function GameSidebar({
           </button>
         ))}
         <button
+          type="button"
+          aria-label="Learn"
           className={`tab-btn ${currentPage === 'learn' || currentPage === 'tutorials' ? 'active' : ''}`}
           onClick={onOpenLearn}
         >

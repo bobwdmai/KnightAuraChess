@@ -1778,9 +1778,10 @@
 
 /* ─── Tab Navigation ─── */
 .tab-navigation {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(42px, 1fr));
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  overflow-x: auto;
+  overflow: hidden;
   flex-shrink: 0;
   scrollbar-width: none;
   background:
@@ -1800,7 +1801,7 @@
 }
 
 .tab-btn {
-  padding: 12px 22px 10px;
+  padding: 10px 4px 9px;
   font-size: 0.74rem;
   font-weight: 600;
   background: transparent;
@@ -1810,13 +1811,14 @@
   border-bottom: 2px solid transparent;
   transition: color var(--transition-base), border-color var(--transition-base), background var(--transition-base);
   white-space: nowrap;
-  flex: 1;
   min-width: 0;
+  width: 100%;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
   position: relative;
 }
 
@@ -1828,7 +1830,7 @@
 }
 
 .tab-icon {
-  font-size: 1rem;
+  font-size: 0.98rem;
   line-height: 1;
   transition: transform var(--transition-base);
 }
@@ -1838,9 +1840,14 @@
 }
 
 .tab-label {
-  font-size: 0.63rem;
-  letter-spacing: 0.04em;
-  line-height: 1;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(0.48rem, 1.35vw, 0.57rem);
+  letter-spacing: 0.018em;
+  line-height: 1.1;
   text-transform: uppercase;
 }
 
@@ -3351,13 +3358,17 @@ textarea.select {
 }
 
 @media (max-width: 640px) {
+  .tab-navigation {
+    grid-template-columns: repeat(7, minmax(42px, 1fr));
+  }
+
   .tab-btn {
     padding: 10px 4px 8px;
-    min-width: 40px;
+    min-width: 0;
   }
 
   .tab-label {
-    font-size: 0.58rem;
+    font-size: 0.52rem;
   }
 
   .player-bar {
