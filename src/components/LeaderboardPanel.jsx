@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, orderBy, query, limit as fsLimit } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db, firebaseEnabled } from '../utils/firebase.js';
 
 export default function LeaderboardPanel({ currentUser, onPlayerClick, embedded }) {
@@ -9,8 +9,7 @@ export default function LeaderboardPanel({ currentUser, onPlayerClick, embedded 
     if (!firebaseEnabled || !db) return;
     const q = query(
       collection(db, 'users'),
-      orderBy('rating', 'desc'),
-      fsLimit(100)
+      orderBy('rating', 'desc')
     );
     const unsub = onSnapshot(
       q,

@@ -75,7 +75,6 @@ export default function AnnouncementsSection({ currentUser, currentUserName, cur
             authorName: speaker.name,
             authorPhotoURL: null,
             createdAt: serverTimestamp(),
-            isBot: true,
           });
           window.localStorage.setItem(BOT_LOBBY_LAST_KEY, String(Date.now()));
         } catch {

@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   limit,
@@ -404,6 +405,47 @@ export function useGameActions({
     await deleteDoc(doc(db, 'game_challenges', incomingChallenge.id));
     localStorage.removeItem(BOT_CHALLENGE_PENDING_KEY);
   }, [db, incomingChallenge]);
+
+  const challengeBot = useCallback(async (botUid, botName) => {
+    if (!user || !firebaseEnabled || !db) return;
+    setMatchError('');
+    try {
+      const botSnap = await getDoc(doc(db, 'users', botUid));
+      const botRating = botSnap.exists() ? (botSnap.data().rating ?? 1200) : 1200;
+      const variantRulesNorm = normalizeVariantRules(setupVariantRules);
+      const newGame = new KnightJumpChess(undefined, variantRulesNorm);
+      const now = serverTimestamp();
+      const gameRefDoc = await addDoc(collection(db, GAMES_COLLECTION), {
+        rule: RULE_ID,
+        variantRules: variantRulesNorm,
+        variantKey: variantRulesKey(variantRulesNorm),
+        status: 'active',
+        whiteId: user.uid,
+        whiteName: displayName,
+        whiteRating: rating,
+        whiteReady: true,
+        blackReady: true,
+        blackId: botUid,
+        blackName: botName,
+        blackRating: botRating,
+        fen: newGame.fen(),
+        moveHistory: [],
+        moveSeq: 0,
+        timeControl: selectedTimeControl,
+        whiteTimeLeft: selectedTimeControl,
+        blackTimeLeft: selectedTimeControl,
+        createdAt: now,
+        updatedAt: now,
+        startedAt: now,
+        lastMoveAt: now,
+      });
+      setGameId(gameRefDoc.id);
+      setMatchStatus('waiting');
+      setActiveTab('play');
+    } catch (error) {
+      setMatchError(error.message || 'Failed to challenge bot');
+    }
+  }, [db, displayName, firebaseEnabled, rating, selectedTimeControl, setActiveTab, setGameId, setMatchError, setMatchStatus, setupVariantRules, user]);
 
   const cancelMatchmaking = useCallback(async () => {
     if (!gameId || !gameData) return;
@@ -889,6 +931,7 @@ export function useGameActions({
     toggleReady,
     handleTimeout,
     handleChallengeFriend,
+    challengeBot,
     acceptChallenge,
     declineChallenge,
     cancelMatchmaking,

@@ -178,7 +178,7 @@ export default function BoardShell({
       {aiThinking && !isBotOnlineGame && (
         <div className="ai-thinking-indicator">
           <div className="thinking-spinner" />
-          <span className="thinking-text">AI is thinking...</span>
+          <span className="thinking-text">Thinking...</span>
         </div>
       )}
       {aiError && <p className="error-text">{aiError}</p>}

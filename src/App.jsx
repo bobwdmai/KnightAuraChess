@@ -19,6 +19,7 @@ import {
 } from './utils/boardHandAnimation.js';
 import { db, firebaseEnabled } from './utils/firebase.js';
 import { DEFAULT_VARIANT_RULES, normalizeVariantRules } from './utils/variantRules.js';
+import { isBotUid } from './utils/textAi.js';
 import './App.css';
 const UserProfileModal = React.lazy(() => import('./components/UserProfileModal.jsx'));
 
@@ -362,6 +363,7 @@ export default function App() {
     toggleReady,
     handleTimeout,
     handleChallengeFriend,
+    challengeBot,
     acceptChallenge,
     declineChallenge,
     cancelMatchmaking,
@@ -738,6 +740,7 @@ export default function App() {
       onStartPractice: handleStartPracticeFromSetup,
       onStartAi: handleStartAiFromSetup,
       onStartOnline: handleStartOnlineFromSetup,
+      onStartCustomGame: createCustomGame,
       isOnline,
     },
   };
@@ -777,6 +780,11 @@ export default function App() {
       cancelMatchmaking,
       leaveMatch,
       toggleReady,
+      variantRules: setupVariantRules,
+      onToggleVariantRule: (rule) => setSetupVariantRules((current) => ({
+        ...current,
+        [rule]: !current[rule],
+      })),
     },
     moveHistory,
     moveTable,
@@ -789,7 +797,7 @@ export default function App() {
     gamesProps: {
       user,
       isOnline,
-      createCustomGame,
+      createCustomGame: () => setSetupModalOpen(true),
       joinGameId,
       setJoinGameId,
       joinCustomGame,
@@ -834,7 +842,7 @@ export default function App() {
         onPlayerClick: (player) => setProfileModalUid(player.id),
       pendingDm,
       onPendingDmHandled: () => setPendingDm(null),
-      onChallengeFriend: handleChallengeFriend,
+      onChallengeFriend: (uid, name) => isBotUid(uid) ? challengeBot(uid, name) : handleChallengeFriend(uid, name),
     },
   };
 
@@ -882,6 +890,11 @@ export default function App() {
               setPendingDm({ chatId, partnerUid, partnerName });
               setProfileModalUid(null);
               setActiveTab('social');
+            }}
+            onChallengePlayer={(uid, name) => {
+              if (isBotUid(uid)) challengeBot(uid, name);
+              else handleChallengeFriend(uid, name);
+              setProfileModalUid(null);
             }}
           />
         </Suspense>

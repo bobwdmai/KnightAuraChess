@@ -17,6 +17,7 @@ export default function PreGameSetupModal({
   onStartPractice,
   onStartAi,
   onStartOnline,
+  onStartCustomGame,
   isOnline,
 }) {
   if (!isOpen) return null;
@@ -123,6 +124,11 @@ export default function PreGameSetupModal({
             <button className="btn btn-ghost" onClick={onStartOnline} disabled={!user || isOnline}>
               {user ? (isOnline ? 'Online Active' : 'Find Online Match') : 'Sign In for Online'}
             </button>
+            {onStartCustomGame && (
+              <button className="btn btn-primary" onClick={onStartCustomGame} disabled={!user}>
+                {user ? 'Create Game' : 'Sign In to Create'}
+              </button>
+            )}
           </div>
         </div>
       </div>
