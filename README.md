@@ -95,6 +95,130 @@ VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
 VITE_FIREBASE_APP_ID="your_app_id"
 ```
 
+## 🔥 Firebase Setup From Scratch
+
+Follow these steps if you are making a new Firebase backend for the app.
+
+### 1. Create a Firebase project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/).
+2. Click **Add project**.
+3. Enter a project name, for example `knightaurachess`.
+4. Choose whether to enable Google Analytics. The app does not require Analytics.
+5. Click **Create project**.
+
+### 2. Add a web app
+
+1. Open your new Firebase project.
+2. Click the web icon: `</>`.
+3. Register the app with a nickname, for example `KnightAuraChess Web`.
+4. You do not need Firebase Hosting for local development.
+5. Copy the Firebase config values Firebase shows you.
+
+Put those values in `.env`:
+
+```env
+VITE_FIREBASE_API_KEY="..."
+VITE_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID="your-project-id"
+VITE_FIREBASE_STORAGE_BUCKET="your-project-id.appspot.com"
+VITE_FIREBASE_MESSAGING_SENDER_ID="..."
+VITE_FIREBASE_APP_ID="..."
+```
+
+Restart `npm run dev` after editing `.env`.
+
+### 3. Enable Authentication
+
+1. In Firebase Console, go to **Build** -> **Authentication**.
+2. Click **Get started**.
+3. Open the **Sign-in method** tab.
+4. Enable **Anonymous** sign-in.
+5. Enable **Google** sign-in.
+6. Add a project support email when Firebase asks for one.
+7. Click **Save**.
+
+For deployed sites, also add your domains under **Authentication** -> **Settings** -> **Authorized domains**. Include any domains you use, such as:
+
+```text
+localhost
+bobwdmai.github.io
+knightaurachess.com
+www.knightaurachess.com
+```
+
+### 4. Create Firestore
+
+1. In Firebase Console, go to **Build** -> **Firestore Database**.
+2. Click **Create database**.
+3. Choose **Production mode**.
+4. Pick a region close to your players.
+5. Click **Enable**.
+
+The app creates documents as players use features. You do not need to manually create collections first.
+
+Main collections used by the app:
+
+```text
+users
+games
+dms
+friend_requests
+game_challenges
+announcements
+community_puzzles
+puzzle_creators
+mail
+```
+
+### 5. Install and log in to Firebase CLI
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase use --add
+```
+
+When prompted, select your Firebase project and give it an alias such as `default`.
+
+### 6. Deploy Firestore rules
+
+This repository already includes [firestore.rules](./firestore.rules).
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+These rules are required for online games, chat, profiles, friends, community puzzles, and puzzle ratings.
+
+### 7. Optional: test rules locally
+
+```bash
+npm run test:rules:emulator
+```
+
+This starts the Firestore emulator and runs the repository's security-rule tests.
+
+### 8. Optional: service account for server move API
+
+Only do this if you are using the Cloudflare `/api/move` backend.
+
+1. In Firebase Console, open **Project settings**.
+2. Go to **Service accounts**.
+3. Click **Generate new private key**.
+4. Store the service-account email and private key as deployment secrets, not in git.
+
+Use these backend env names:
+
+```env
+FIREBASE_PROJECT_ID="your-project-id"
+FIREBASE_WEB_API_KEY="your-web-api-key"
+FIREBASE_SERVICE_ACCOUNT_EMAIL="firebase-adminsdk-...@your-project-id.iam.gserviceaccount.com"
+FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+Never commit real Firebase keys, service-account private keys, or `.env`.
+
 ### Running the App
 ```bash
 npm run dev
