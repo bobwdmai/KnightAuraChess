@@ -52,7 +52,6 @@ export default function BoardShell({
   gameId,
   user,
   displayName,
-  liveVoiceChat,
   setupModalProps,
 }) {
   const chatParticipant = gameData
@@ -189,8 +188,6 @@ export default function BoardShell({
             gameId={gameId}
             currentUser={user}
             currentUserName={displayName}
-            liveVoiceChat={liveVoiceChat && !chatParticipant}
-            playerColor={playerColor}
             chatParticipant={chatParticipant}
           />
         </Suspense>

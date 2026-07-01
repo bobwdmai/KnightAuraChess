@@ -1,22 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
-  getDocs,
-  limit,
   onSnapshot,
-  orderBy,
-  query,
   serverTimestamp,
   setDoc,
-  updateDoc,
 } from 'firebase/firestore';
 import './LearnPage.css';
 import './CommunityPuzzlesPage.css';
 import KnightJumpChess from '../KnightJumpChess.js';
 import { db, firebaseEnabled } from '../utils/firebase.js';
+import {
+  fetchCommunityPuzzlesFromSheet,
+  publishCommunityPuzzleToSheet,
+} from '../utils/communityPuzzlesApi.js';
 
 import pieceNlt from '../assets/chess/cburnett/Chess_nlt45.svg';
 import pieceNdt from '../assets/chess/cburnett/Chess_ndt45.svg';
@@ -101,12 +99,17 @@ function isLocalPuzzle(puzzle) {
   return String(puzzle?.id || '').startsWith('local-') || puzzle?.authorId === 'local';
 }
 
+function isSheetPuzzle(puzzle) {
+  return String(puzzle?.id || '').startsWith('sheet-') || puzzle?.storage === 'google-sheets';
+}
+
 function getPuzzleStatus(puzzle) {
   return puzzle?.status || 'approved';
 }
 
 function canManagePuzzle(puzzle, currentUser, moderator) {
   if (isLocalPuzzle(puzzle)) return true;
+  if (isSheetPuzzle(puzzle)) return false;
   return Boolean(currentUser && (puzzle.authorId === currentUser.uid || moderator));
 }
 
@@ -468,17 +471,22 @@ function PuzzleCard({
     !currentUser.isAnonymous &&
     !isLocalPuzzle(puzzle) &&
     puzzle.authorId &&
+    puzzle.authorId !== 'sheet' &&
     puzzle.authorId !== currentUser.uid
   );
-  const canRate = Boolean(currentUser && !currentUser.isAnonymous && !isLocalPuzzle(puzzle));
-  const ratingCount = ratings.length;
+  const canRate = Boolean(currentUser && !currentUser.isAnonymous && !isLocalPuzzle(puzzle) && !isSheetPuzzle(puzzle));
+  const sheetRatingCount = Number(puzzle.ratingCount || 0);
+  const sheetRatingTotal = Number(puzzle.ratingTotal || 0);
+  const ratingCount = isSheetPuzzle(puzzle) ? sheetRatingCount : ratings.length;
   const ratingAverage = ratingCount > 0
-    ? ratings.reduce((sum, row) => sum + row.rating, 0) / ratingCount
+    ? (isSheetPuzzle(puzzle)
+      ? sheetRatingTotal / ratingCount
+      : ratings.reduce((sum, row) => sum + row.rating, 0) / ratingCount)
     : 0;
   const ownRating = ratings.find((row) => row.uid === currentUser?.uid)?.rating || 0;
 
   useEffect(() => {
-    if (!firebaseEnabled || !db || isLocalPuzzle(puzzle)) {
+    if (!firebaseEnabled || !db || isLocalPuzzle(puzzle) || isSheetPuzzle(puzzle)) {
       setRatings([]);
       return undefined;
     }
@@ -669,7 +677,7 @@ function PuzzleCard({
               </button>
             </>
           )}
-          {moderator && !isLocalPuzzle(puzzle) && (
+          {moderator && !isLocalPuzzle(puzzle) && !isSheetPuzzle(puzzle) && (
             <>
               {status !== 'approved' && (
                 <button type="button" className="btn btn-primary" onClick={() => onModerate(puzzle, { status: 'approved' })}>
@@ -703,9 +711,17 @@ function PuzzleCard({
   );
 }
 
-export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser, currentUserName }) {
+export default function CommunityPuzzlesPage({
+  onBack,
+  onOpenLearn,
+  onOpenPublishPuzzle,
+  currentUser,
+  currentUserName,
+  initialView = 'browse',
+  publishOnly = false,
+}) {
   const [puzzles, setPuzzles] = useState([]);
-  const [view, setView] = useState('browse');
+  const [view, setView] = useState(initialView);
   const [filter, setFilter] = useState('all');
   const [tagFilter, setTagFilter] = useState('all');
   const [editingPuzzleId, setEditingPuzzleId] = useState(null);
@@ -722,15 +738,15 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   const [solutionMoves, setSolutionMoves] = useState([]);
   const [solutionFrom, setSolutionFrom] = useState('');
   const [solutionTo, setSolutionTo] = useState('');
-  const storageMode = firebaseEnabled && db && currentUser ? 'Firestore' : 'Local';
+  const storageMode = 'Google Sheets';
 
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'knightAuraChess — Puzzles';
+    document.title = publishOnly ? 'knightAuraChess — Publish Puzzle' : 'knightAuraChess — Puzzles';
     return () => {
       document.title = previousTitle;
     };
-  }, []);
+  }, [publishOnly]);
 
   useEffect(() => {
     let active = true;
@@ -817,30 +833,29 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
   };
 
   useEffect(() => {
-    if (!firebaseEnabled || !db) {
-      setPuzzles(loadLocalPuzzles());
-      setLoading(false);
-      return undefined;
-    }
+    let active = true;
+    setLoading(true);
 
-    const puzzleQuery = query(
-      collection(db, 'community_puzzles'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-
-    return onSnapshot(
-      puzzleQuery,
-      (snap) => {
-        setPuzzles(mergeLocalPuzzles(snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))));
+    fetchCommunityPuzzlesFromSheet()
+      .then((sheetPuzzles) => {
+        if (!active) return;
+        setPuzzles(mergeLocalPuzzles(sheetPuzzles.map((puzzle) => ({
+          ...puzzle,
+          storage: 'google-sheets',
+        }))));
         setLoading(false);
-      },
-      (error) => {
-        console.warn('Community puzzles snapshot failed:', error?.message || error);
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.warn('Community puzzles sheet load failed:', error?.message || error);
         setPuzzles(loadLocalPuzzles());
         setLoading(false);
-      }
-    );
+        setSubmitError('Could not reach the puzzle sheet yet. Showing local puzzles only.');
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSubmit = async (event) => {
@@ -882,9 +897,6 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
         : null;
       const wasEditing = Boolean(editingPuzzleId);
       const editingLocal = Boolean(editingPuzzleId?.startsWith?.('local-') || isLocalPuzzle(existingPuzzle));
-      const nextStatus = firebaseEnabled && db && currentUser
-        ? (wasEditing && moderator ? (existingPuzzle?.status || 'pending') : 'pending')
-        : 'approved';
       const payload = {
         title,
         description,
@@ -896,72 +908,39 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
         authorId: currentUser?.uid || 'local',
         authorName: currentUserName || 'Guest creator',
         featured: existingPuzzle?.featured || false,
-        status: nextStatus,
+        status: 'approved',
         createdAt: existingPuzzle?.createdAt || Date.now(),
         updatedAt: Date.now(),
       };
 
-      if (firebaseEnabled && db && currentUser && !editingLocal) {
-        if (editingPuzzleId) {
-          await updateDoc(doc(db, 'community_puzzles', editingPuzzleId), {
-            title,
-            description,
-            fen,
-            solution: firstSolutionMove.san,
-            solutionMoves,
-            hint,
-            tags,
-            status: nextStatus,
-            updatedAt: serverTimestamp(),
-          });
-        } else {
-          const puzzleRef = await addDoc(collection(db, 'community_puzzles'), {
-            ...payload,
-            authorId: currentUser.uid,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-          try {
-            const followersSnap = await getDocs(collection(db, 'puzzle_creators', currentUser.uid, 'followers'));
-            await Promise.all(followersSnap.docs.map((followerDoc) => {
-              const follower = followerDoc.data();
-              if (!follower.followerEmail) return Promise.resolve();
-              return addDoc(collection(db, 'mail'), {
-                to: follower.followerEmail,
-                creatorId: currentUser.uid,
-                followerId: followerDoc.id,
-                puzzleId: puzzleRef.id,
-                template: {
-                  name: 'newCommunityPuzzle',
-                  data: {
-                    authorName: currentUserName || 'A player',
-                    puzzleTitle: title,
-                    puzzleUrl: getPuzzleUrl(),
-                  },
-                },
-                createdAt: serverTimestamp(),
-              });
-            }));
-          } catch (notifyError) {
-            console.warn('Puzzle follower email queue failed:', notifyError?.message || notifyError);
-          }
-        }
-      } else {
+      if (editingLocal) {
         const localEntry = { id: editingPuzzleId || `local-${Date.now()}`, ...payload, status: 'approved' };
         const currentLocal = loadLocalPuzzles();
         const next = editingPuzzleId
           ? currentLocal.map((puzzle) => puzzle.id === editingPuzzleId ? { ...puzzle, ...localEntry } : puzzle)
           : [localEntry, ...currentLocal];
         syncLocalPuzzleState(next);
+      } else if (editingPuzzleId) {
+        setSubmitError('Sheet-backed puzzle editing is not available yet. Publish a new version instead.');
+        return;
+      } else {
+        const publishedPuzzle = await publishCommunityPuzzleToSheet({
+          ...payload,
+          authorId: currentUser?.uid || 'sheet',
+          authorName: currentUserName || currentUser?.email || 'Community creator',
+          puzzleUrl: getPuzzleUrl(),
+        });
+        setPuzzles((current) => [
+          { ...publishedPuzzle, storage: 'google-sheets' },
+          ...current,
+        ]);
       }
 
       resetForm();
-      setView('browse');
+      setView(publishOnly ? 'submit' : 'browse');
       setSubmitStatus(wasEditing
         ? 'Puzzle updated.'
-        : (firebaseEnabled && db && currentUser
-          ? 'Puzzle submitted for approval.'
-          : 'Puzzle saved locally in this browser.'));
+        : 'Puzzle published to Google Sheets.');
     } catch (error) {
       setSubmitError(error?.message || 'Could not publish puzzle.');
     }
@@ -1052,31 +1031,17 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
     setSubmitError('');
     setSubmitStatus('');
     try {
-      if (firebaseEnabled && db && currentUser && !isLocalPuzzle(puzzle)) {
-        await deleteDoc(doc(db, 'community_puzzles', puzzle.id));
-      } else {
-        const next = loadLocalPuzzles().filter((entry) => entry.id !== puzzle.id);
-        syncLocalPuzzleState(next);
-      }
+      if (!isLocalPuzzle(puzzle)) return;
+      const next = loadLocalPuzzles().filter((entry) => entry.id !== puzzle.id);
+      syncLocalPuzzleState(next);
       setSubmitStatus('Puzzle deleted.');
     } catch (error) {
       setSubmitError(error?.message || 'Could not delete puzzle.');
     }
   };
 
-  const handleModerate = async (puzzle, changes) => {
-    if (!moderator || !firebaseEnabled || !db || isLocalPuzzle(puzzle)) return;
-    setSubmitError('');
-    setSubmitStatus('');
-    try {
-      await updateDoc(doc(db, 'community_puzzles', puzzle.id), {
-        ...changes,
-        updatedAt: serverTimestamp(),
-      });
-      setSubmitStatus('Moderation updated.');
-    } catch (error) {
-      setSubmitError(error?.message || 'Could not update moderation.');
-    }
+  const handleModerate = () => {
+    setSubmitError('Sheet moderation is not available yet.');
   };
 
   const handleToggleFollow = async (puzzle) => {
@@ -1127,14 +1092,20 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
         <button className="lp-back-btn" onClick={onBack}>
           ← Back to Home
         </button>
-        <span className="lp-crumb">Knight-Aura&nbsp;<strong>Puzzles</strong></span>
+        <span className="lp-crumb">Knight-Aura&nbsp;<strong>{publishOnly ? 'Publish' : 'Puzzles'}</strong></span>
         <span className="lp-spacer" />
         <nav className="lp-toc">
-          <button type="button" className={`lp-toc-link ${view === 'browse' ? 'active' : ''}`} onClick={() => setView('browse')}>
-            Browse
-          </button>
-          <button type="button" className={`lp-toc-link ${view === 'submit' ? 'active' : ''}`} onClick={() => setView('submit')}>
-            Submit
+          {!publishOnly && (
+            <button type="button" className={`lp-toc-link ${view === 'browse' ? 'active' : ''}`} onClick={() => setView('browse')}>
+              Browse
+            </button>
+          )}
+          <button
+            type="button"
+            className={`lp-toc-link ${view === 'submit' ? 'active' : ''}`}
+            onClick={() => (publishOnly ? undefined : setView('submit'))}
+          >
+            Publish
           </button>
           <button type="button" className="lp-toc-link" onClick={onOpenLearn}>
             Learn
@@ -1145,13 +1116,15 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
       <section className="cp-hero">
         <div className="cp-hero__copy">
           <div className="lp-hero-eyebrow">Community-made</div>
-          <h1>Browse puzzles the community publishes, then add your own.</h1>
+          <h1>{publishOnly ? 'Publish a community puzzle.' : 'Browse puzzles the community publishes, then add your own.'}</h1>
           <p className="cp-hero__lede">
-            Every puzzle here lives in the same repo-backed app. Signed-in players can publish positions, and everyone can solve them.
+            {publishOnly
+              ? 'Build the position with the board, click the solution line, and save it to the shared Google Sheet.'
+              : 'Every puzzle here is shared through the community sheet. Signed-in players can publish positions, and everyone can solve them.'}
           </p>
           <div className="cp-hero__actions">
-            <button className="btn btn-primary" onClick={() => setView('browse')}>Browse puzzles</button>
-            <button className="btn btn-ghost" onClick={() => setView('submit')}>Publish a puzzle</button>
+            {!publishOnly && <button className="btn btn-primary" onClick={() => setView('browse')}>Browse puzzles</button>}
+            <button className="btn btn-ghost" onClick={onOpenPublishPuzzle || (() => setView('submit'))}>Publish a puzzle</button>
           </div>
         </div>
         <div className="cp-hero__stats">
@@ -1171,7 +1144,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
       </section>
 
       <main className="cp-main">
-        {(view === 'browse' || view === 'submit') && (
+        {!publishOnly && (view === 'browse' || view === 'submit') && (
           <section className="cp-panel">
             <div className="cp-panel__head">
               <div>
@@ -1234,18 +1207,14 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
           </section>
         )}
 
-        {view === 'submit' && (
+        {(publishOnly || view === 'submit') && (
           <section className="cp-panel">
             <div className="cp-panel__head">
               <div>
                 <p className="cp-kicker">Submit</p>
                 <h2>{editingPuzzleId ? 'Edit your puzzle' : 'Publish your own puzzle'}</h2>
               </div>
-              <span className="muted">
-                {firebaseEnabled
-                  ? (currentUser ? 'Publishing to the shared board.' : 'Sign in to publish to Firestore.')
-                  : 'Stored locally in this browser.'}
-              </span>
+              <span className="muted">Publishing to Google Sheets.</span>
             </div>
 
             <form className="cp-form" onSubmit={handleSubmit}>
@@ -1335,7 +1304,7 @@ export default function CommunityPuzzlesPage({ onBack, onOpenLearn, currentUser,
                   type="button"
                   onClick={() => {
                     resetForm();
-                    setView('browse');
+                    setView(publishOnly ? 'submit' : 'browse');
                   }}
                 >
                   Cancel

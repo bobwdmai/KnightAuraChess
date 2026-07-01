@@ -2860,71 +2860,6 @@ textarea.select {
   color: var(--accent-bright);
 }
 
-.game-chat__voice-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: linear-gradient(180deg, rgba(90,144,32,0.08), rgba(90,144,32,0.02));
-}
-
-.game-chat__voice-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.game-chat__voice-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.2);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
-}
-
-.game-chat__voice-dot--live {
-  background: #49c05f;
-  box-shadow: 0 0 10px rgba(73,192,95,0.6);
-}
-
-.game-chat__voice-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.game-chat__voice-diagnostics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 8px;
-}
-
-.game-chat__voice-diagnostic {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 8px 9px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background: rgba(255,255,255,0.04);
-}
-
-.game-chat__voice-diagnostic-label {
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-}
-
-.game-chat__voice-diagnostic-value {
-  font-size: 0.8rem;
-  color: var(--text-bright);
-  font-weight: 600;
-}
-
 .game-chat__messages {
   height: 150px;
   overflow-y: auto;
@@ -2975,16 +2910,6 @@ textarea.select {
   padding: 6px 14px;
   font-size: 0.8rem;
   flex-shrink: 0;
-}
-
-.game-chat__voice-btn {
-  min-width: 84px;
-}
-
-.game-chat__voice-btn--live {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
 }
 
 .game-chat__speech-status {

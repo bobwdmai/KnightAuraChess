@@ -109,7 +109,17 @@ Firestore rules are part of the app. After changing [firestore.rules](./firestor
 firebase deploy --only firestore:rules
 ```
 
-This is required for online features such as game chat and peer voice signaling.
+This is required for online features such as game chat, profiles, friends, and match history.
+
+## 🧩 Community Puzzle Sheet
+
+Community puzzle publishing uses the same-origin `/api/community-puzzles` Cloudflare Pages Function. It appends rows to this Google Sheet by default:
+
+```text
+1GckEpaMGLECyS0AmGTibt8FIhSu4GF8S3Lg5iyKwND4
+```
+
+In Cloudflare Pages, set `GOOGLE_SERVICE_ACCOUNT_EMAIL` and `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`, then share the sheet with that service-account email.
 
 ## 🧭 Authoritative Move API (Rollout)
 

@@ -66,6 +66,11 @@ FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY=
 TEXT_AI_MODEL=@cf/meta/llama-3-8b-instruct
 TEXT_AI_UPSTREAM_URL=
 TEXT_AI_UPSTREAM_AUTH_BEARER=
+
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SHEETS_PUZZLES_RANGE=
+GOOGLE_SERVICE_ACCOUNT_EMAIL=
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
 ```
 
 Cloudflare bindings:
@@ -94,6 +99,10 @@ Use these secret names instead:
   - `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY`
   - `TEXT_AI_UPSTREAM_URL`
   - `TEXT_AI_UPSTREAM_AUTH_BEARER`
+  - `GOOGLE_SHEETS_SPREADSHEET_ID`
+  - `GOOGLE_SHEETS_PUZZLES_RANGE`
+  - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+  - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`
 
 - Local development (`.env`, gitignored):
   - use the same key names above for local testing.
@@ -104,6 +113,7 @@ Use these secret names instead:
 - Backend APIs (same origin):
   - `functions/api/move.js`: server-authoritative move execution.
   - `functions/api/text-ai.js`: proxy endpoint for chat AI.
+  - `functions/api/community-puzzles.js`: Google Sheets-backed community puzzle reads/submissions.
 - Firestore rules are in `firestore.rules`.
 
 ## Architecture Summary
