@@ -849,6 +849,7 @@ export default function App() {
         profile={profile}
         displayName={displayName}
         rating={rating}
+        onHome={() => navigateToPage('home')}
         onOpenProfile={() => setProfileModalUid(user.uid)}
         onOpenSignIn={() => navigateToPage('signin')}
         onSignOut={signOut}
